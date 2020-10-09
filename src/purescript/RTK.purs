@@ -65,7 +65,7 @@ prims ps cs ks = go cs ks 1 ""
       if (hasPrims $ components c) 
         then k <> "[" <> i <> "] "
         else ""
-    go [] _ _ result = result
+    go [] _ _ result = trim result
     go cs' ks' i result = 
       case uncons cs' of
         Just {head: hcs, tail: tcs} -> 
@@ -75,8 +75,9 @@ prims ps cs ks = go cs ks 1 ""
             s = frame hcs hks $ show i
           in
             go tcs tks (i+1) (result <> s)
-        Nothing -> "unit"
+        Nothing -> "" -- we never reach here
 
+-- implementation using folds
 --prims 
 --  :: Array String 
 --  -> Array String 

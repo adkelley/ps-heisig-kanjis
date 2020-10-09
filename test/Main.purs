@@ -28,7 +28,7 @@ main = runTest do
       Assert.assert "frames returns string" $
           "A[1] B[2]" == frames ["1", "2"] ["1", "2"] ["A", "B"] " " errorMsg
       Assert.assert "prims returns string" $
-         "A[1] B[2] " == prims ["A", "B"] ["A;   B", "A; B; C"] ["A", "B"] 
+         "A[1] B[2]" == prims ["A", "B"] ["A;   B", "A; B; C"] ["A", "B"] 
 
   suite "red" do
     test "bad arguements" do
