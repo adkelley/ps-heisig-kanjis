@@ -3,15 +3,13 @@ module RTK where
 
 import Prelude
 
-import Data.Array (elemIndex, index, intercalate
-                  , zipWith, zip, intersect, difference
+import Data.Array (elemIndex, index, intercalate, uncons
+                  , zipWith, intersect, difference
+                  , head, tail
                   )
-import Data.Maybe (Maybe (..))
-import Data.Foldable (foldr)
+import Data.Maybe (Maybe (..), fromMaybe)
 import Data.String (Pattern (..), split, trim)
 import Data.Traversable (traverse)
-import Data.Tuple (Tuple (..))
-import Data.Tuple.Nested ((/\))
 
 -- TODO: Can this be a newtype?
 type Query = Array String
@@ -58,16 +56,41 @@ prims
   :: Array String 
   -> Array String 
   -> Array String 
-  -> Array String
   -> String
-prims ps cs ks is = go
+prims ps cs ks = go cs ks 1 ""
   where
     components s = trim <$> split (Pattern ";") s
-    isSubset xs = [] == (difference ps $ intersect ps xs)
-    frame :: Tuple (Array String) (Tuple String String) -> String
-    frame (Tuple c (Tuple k i)) = 
-      if (isSubset c)
-        then k <> "[" <> i <> "]"
+    hasPrims xs = [] == (difference ps $ intersect ps xs)
+    frame c k i = 
+      if (hasPrims $ components c) 
+        then k <> "[" <> i <> "] "
         else ""
-    fs = zipWith (\x y -> components x /\ y) cs $ zip ks is
-    go = foldr (\x -> (<>) (frame x)) "" fs
+    go [] _ _ result = result
+    go cs' ks' i result = 
+      case uncons cs' of
+        Just {head: hcs, tail: tcs} -> 
+          let 
+            hks = fromMaybe "" $ head ks'
+            tks = fromMaybe [] $ tail ks'
+            s = frame hcs hks $ show i
+          in
+            go tcs tks (i+1) (result <> s)
+        Nothing -> "unit"
+
+--prims 
+--  :: Array String 
+--  -> Array String 
+--  -> Array String 
+--  -> Array String
+--  -> String
+--prims ps cs ks is = go
+--  where
+--    components s = trim <$> split (Pattern ";") s
+--    hasPrims xs = [] == (difference ps $ intersect ps xs)
+--    frame :: Tuple (Array String) (Tuple String String) -> String
+--    frame (Tuple c (Tuple k i)) = 
+--      if (hasPrims c)
+--        then k <> "[" <> i <> "]"
+--        else ""
+--    fs = zipWith (\x y -> components x /\ y) cs $ zip ks is
+--    go = foldr (\x -> (<>) (frame x)) "" fs

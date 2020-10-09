@@ -130,7 +130,7 @@ async function gsrun(cl) {
 		}
 		case 'prims': {
             const query = process.argv.slice(3);
-            result = RTK.prims(query)(components)(kanji)(indices)
+            result = RTK.prims(query)(components)(kanji)
             console.log(result)
 			break;
 		}
