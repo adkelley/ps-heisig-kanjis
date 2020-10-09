@@ -1,4 +1,5 @@
 api-keys.json
+/lib/
 /bower_components/
 /node_modules/
 /.pulp-cache/

@@ -3,49 +3,37 @@ module Test.Main where
 import Prelude
 
 import Effect (Effect)
+--import Effect.Console (log)
 import Test.Unit (suite, test)
 import Test.Unit.Assert as Assert
 import Test.Unit.Main (runTest)
 
-import RTK (find_indices, find_keywords, find_kanji)
+import RTK (query_rtk, frames, prims)
 
-compound :: Array String
-compound = ["漢", "字"]
+errorMsg :: String
+errorMsg = "Usage: xxx xxxx xxx" 
 
-kanji :: Array String
-kanji = [ "字", "漢"]
-
-keywords :: Array String
-keywords = ["character", "Sino-"]
-
-indices :: Array String
-indices = ["197", "1701"]
-
-primitives :: Array String
-primitives = ["Sino-", "character"]
-
-badArg :: Array String
-badArg = ["?", "?"]
-
-separator :: String
-separator = ", "
+-- | Use this main for console.log debugging
+--main :: Effect Unit
+--main = do
+--  --log $ frames ["1", "2"] ["1", "2"] ["缶", "時"]
+--  log $ prims ["a", "b"] ["a;   b", "a; b; c"] ["A", "B"]
 
 main :: Effect Unit
 main = runTest do
   suite "green" do
     test "good arguements" do
-      Assert.assert "kw 漢字 should be Sino-, character" $ 
-        "Sino-, character" == find_keywords compound kanji keywords separator
-      Assert.assert "ix 漢字 should be 1701, 197" $ 
-        "1701, 197" == find_indices compound kanji indices separator
-      Assert.assert "kanji Sino-,character should be 漢字" $ 
-        "漢字" == find_kanji primitives keywords kanji ""
+      Assert.assert "rtk_query returns string" $ 
+        "1, 2" == query_rtk ["A", "B"] ["A", "B"] ["1", "2"] ", " errorMsg
+      Assert.assert "frames returns string" $
+          "A[1] B[2]" == frames ["1", "2"] ["1", "2"] ["A", "B"] " " errorMsg
+      Assert.assert "prims returns string" $
+         "A[1] B[2]" == prims ["A", "B"] ["A;   B", "A; B; C"] ["A", "B"] ["1",
+           "2"]
 
   suite "red" do
     test "bad arguements" do
-      Assert.assert "kw ?? should be Usage: kw 漢字" $ 
-        "Usage: kw 漢字" == find_keywords badArg kanji keywords separator
-      Assert.assert "ix ?? should be Usage: ix 漢字" $ 
-        "Usage: ix 漢字" == find_indices badArg kanji indices separator
-      Assert.assert "kanji ?? should be Usage: kanji Sino- character" $
-        "Usage: kanji Sino- character" == find_kanji badArg keywords kanji ""
+      Assert.assert "invalid queries should return error message" $ 
+        errorMsg == query_rtk ["?"] ["A", "B"] ["1", "2"] ", " errorMsg
+      Assert.assert "invalid frames should return error message" $
+        errorMsg == frames ["?"] ["1", "2"] ["A", "B"] " " errorMsg

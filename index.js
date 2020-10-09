@@ -22,24 +22,24 @@ client.authorize(function(err, tokens) {
 
 
 /*
-** Given an RTK search string (e.g, kanji or kanji compound), return a string containing
-** the result or all the results making up that kanji or compound,
+** Given an RTK search string (e.g, kanji or kanji jukugo), return a string containing
+** the result or all the results making up that kanji or jukugo,
 ** respectively. results are a keyword(s) or index(es)
 **
-** @compound string (e.g., kanji compound)
+** @jukugo string (e.g., kanji jukugo)
 ** @sep1   character separator for search string
 ** @dict1  dictionary1 (i.e., kanjis or RTK indices)
 ** @dict2  dictionary2 (i.e., kanjis or RTK indices)
 ** @sep2   character separator for results
 */
-const traverse = (compound, dict1, dict2, sep2) =>
-	compound.map(key => dict2[dict1.indexOf(key)])
-	        .join(sep2);
-
-
-const groupFrame = (compound, kanjis, indices) =>
-	compound.map(key => `${kanjis[indices.indexOf(key)]}[${key}]`)
-            .join('  ');
+//const traverse = (jukugo, dict1, dict2, sep2) =>
+//	jukugo.map(key => dict2[dict1.indexOf(key)])
+//	        .join(sep2);
+//
+//
+//const groupFrame = (jukugo, kanjis, indices) =>
+//	jukugo.map(key => `${kanjis[indices.indexOf(key)]}[${key}]`)
+//            .join('  ');
 
 const intersection = (set1, set2) =>
     new Set([...set1].filter(x => set2.has(x)));
@@ -93,48 +93,50 @@ async function gsrun(cl) {
 
 	/*
 	 * Options: 
-	 *   kw given a kanji compound, return the RTK keywords
-	 *   ix given a kanji compound, return the RTK indices
-     *   ks given a list of comma separated keywords, return kanji
-	 *   -g given a set of space separated RTK indices, return the Kanjis
+	 *   kw given a jukugo, return the RTK keywords
+	 *   ix given a jukugo, return the RTK indices
+     *   jukugo given a list of comma separated keywords, return jukugo
+	 *   frames given a set of space separated RTK indices, return the Kanjis
      *   -c given a set of space separated component names, return the Kanjis
      *   that contain those components
 	*/
+
+
+    let result = ""
 	switch (option) {
-		case 'kw': {
-            const compound = process.argv[3].split('');
-			const results = RTK.find_keywords(compound)(kanji)(keywords)(', ');
-            console.log(results) // TODO: remove after dubugging
-			pbcopy(results);
+		case 'keywords': {
+            const jukugo = process.argv[3].split('');
+            const errorMsg = "Usage: keywords jukugo"
+			result = RTK.query_rtk(jukugo)(kanji)(keywords)(', ')(errorMsg);
 			break;
 		}
-		case 'ix': {
-            const compound = process.argv[3].split('');
-            results = RTK.find_indices(compound)(kanji)(indices)(', ')
-            console.log(results) // TODO: remove after dubugging
-			pbcopy(results);
+		case 'indices': {
+            const jukugo = process.argv[3].split('');
+            const errorMsg = "Usage: indices jukugo" 
+            result = RTK.query_rtk(jukugo)(kanji)(indices)(', ')(errorMsg)
 			break;
 		}
-		case 'kanji': {
-            const primitives = process.argv.slice(3);
-            console.log(primitives)
-            results = RTK.find_kanji(primitives)(keywords)(kanji)('')
-            console.log(results) // TODO: remove after dubugging
-			pbcopy(results);
+		case 'jukugo': {
+            const query = process.argv.slice(3);
+            const errorMsg = "Usage: jukugo keywords"
+            result = RTK.query_rtk(query)(keywords)(kanji)('')(errorMsg)
 			break;
 		}
-		case '-g': {
-			pbcopy(groupFrame(process.argv.slice(3), kanji, indices));
+		case 'frames': {
+            const query = process.argv.slice(3);
+            const errMsg = "Usage: frames indices"
+            result = RTK.frames(query)(indices)(kanji)(' ')(errMsg)
 			break;
 		}
-		case '-c': {
-            pbcopy(primitives(process.argv.slice(3), components, kanji, indices));
-            //primitives(process.argv.slice(3), components, kanjis, indices);
+		case 'prims': {
+            const query = process.argv.slice(3);
+            result = RTK.prims(query)(components)(kanji)(indices)
+            console.log(result)
 			break;
 		}
 		default: {
-			console.error('Error: invalid option');
-			pbcopy('Error: invalid option');
+			result = 'Error: invalid option';
 		}
 	}
+    pbcopy(result);
 }

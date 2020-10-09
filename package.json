@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "ps": "spago bundle-module --watch --main RTK --to ./lib/rtk.js",
-    "js": "nodemon --watch lib --watch index.js index.js kanji Sino- character",
+    "js": "nodemon --watch lib --watch index.js index.js prims stick mouth",
     "dev": "npm run js & npm run ps",
     "test": "spago test --watch --main Test.Main"
   },

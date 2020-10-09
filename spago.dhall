@@ -9,6 +9,7 @@ You can edit this file as you like.
   , "effect"
   , "foldable-traversable"
   , "psci-support"
+  , "strings"
   , "test-unit"
   ]
 , packages = ./packages.dhall

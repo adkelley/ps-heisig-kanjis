@@ -1,51 +1,73 @@
-module RTK ( find_keywords
-           , find_indices
-           , find_kanji
-           ) where
+--module RTK (query_rtk, frames, prims) where
+module RTK where
 
 import Prelude
 
-import Data.Array (elemIndex, index, intercalate)
-import Data.Traversable (traverse)
+import Data.Array (elemIndex, index, intercalate
+                  , zipWith, zip, intersect, difference
+                  )
 import Data.Maybe (Maybe (..))
+import Data.Foldable (foldr)
+import Data.String (Pattern (..), split, trim)
+import Data.Traversable (traverse)
+import Data.Tuple (Tuple (..))
+import Data.Tuple.Nested ((/\))
 
-type Compound = Array String
-type Kanji = Array String
-type Keywords = Array String
+-- TODO: Can this be a newtype?
+type Query = Array String
 type Indices = Array String
 type Separator = String
-type Primitives = Array String
+type Keys = Array String
+type Values = Array String
 
-search_rtk :: Compound -> Kanji -> Array String -> Maybe (Array String)
-search_rtk compound kanji xs =
-  traverse (\x -> elemIndex x kanji >>= index xs) compound
+search_rtk 
+  :: Array String 
+  -> Keys 
+  -> Values 
+  -> Maybe Values
+search_rtk query keys values =
+  traverse (\x -> elemIndex x keys >>= index values) query
 
 rtk_result :: String -> Maybe String -> String
-rtk_result usage result = 
+rtk_result errMsg result = 
   case result of
     Just s -> s
-    Nothing -> usage
+    Nothing -> errMsg
 
-intercalate_ :: Separator -> Maybe (Array String) -> Maybe String
-intercalate_ separator mas =
-  liftA1 (\xs -> intercalate separator xs) mas
+-- | Given a query, keys and values, find the query's values
+-- | and append them into a string using a separator. If there's
+-- | and error then return the error message parameter
+query_rtk :: Query -> Keys -> Values -> String -> String -> String
+query_rtk query keys values separator errMsg = 
+  rtk_result errMsg $ 
+    liftA1 (\xs -> intercalate separator xs) $ 
+    search_rtk query keys values
 
--- | Given a compound, find the compound's keywords.
-find_keywords :: Compound -> Kanji -> Keywords -> Separator -> String
-find_keywords compound kanji keywords separator = 
- rtk_result "Usage: kw 漢字" $
-   intercalate_ separator $ 
-   search_rtk compound kanji keywords 
+-- | given an collection of indices return the RTK frames for each
+-- | index as a string, otherwise return the error message parameter
+frames :: Query -> Keys -> Values -> String -> String -> String
+frames query indices kanji separator errMsg = do
+  let mxs = search_rtk query indices kanji 
+  case mxs of
+    Just xs -> intercalate separator $ 
+      zipWith (<>) xs $ (\x -> "[" <> x <> "]") <$> query
+    Nothing -> errMsg
 
--- | Given a compound, find the compound's indices.
-find_indices :: Compound -> Kanji -> Indices -> Separator -> String
-find_indices compound kanji indices separator = 
-  rtk_result "Usage: ix 漢字" $
-   intercalate_ separator $ 
-   search_rtk compound kanji indices 
 
-find_kanji :: Primitives -> Keywords -> Kanji -> Separator -> String
-find_kanji query keywords kanji separator = 
-   rtk_result "Usage: kanji Sino- character" $
-     intercalate_ separator $
-     search_rtk query keywords kanji 
+prims 
+  :: Array String 
+  -> Array String 
+  -> Array String 
+  -> Array String
+  -> String
+prims ps cs ks is = go
+  where
+    components s = trim <$> split (Pattern ";") s
+    isSubset xs = [] == (difference ps $ intersect ps xs)
+    frame :: Tuple (Array String) (Tuple String String) -> String
+    frame (Tuple c (Tuple k i)) = 
+      if (isSubset c)
+        then k <> "[" <> i <> "]"
+        else ""
+    fs = zipWith (\x y -> components x /\ y) cs $ zip ks is
+    go = foldr (\x -> (<>) (frame x)) "" fs
