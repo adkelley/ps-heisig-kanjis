@@ -1,5 +1,5 @@
---module RTK (query_rtk, frames, prims) where
-module RTK where
+module RTK ( query_rtk, kanjiToKeywords, primsToFrames
+           , kanjiToIndices, indicesToFrames) where
 
 import Prelude
 
@@ -11,9 +11,9 @@ import Data.Maybe (Maybe (..), fromMaybe)
 import Data.String (Pattern (..), split, trim)
 import Data.Traversable (traverse)
 
+import Types (Kanji, Keywords, Query, Indices)
+
 -- TODO: Can this be a newtype?
-type Query = Array String
-type Indices = Array String
 type Separator = String
 type Keys = Array String
 type Values = Array String
@@ -41,23 +41,33 @@ query_rtk query keys values separator errMsg =
     liftA1 (\xs -> intercalate separator xs) $ 
     search_rtk query keys values
 
+kanjiToKeywords :: Query -> Kanji -> Keywords -> String
+kanjiToKeywords query kanji keywords = do
+  let errMsg = "Usage: node index.js -k 熟語"
+  query_rtk query kanji keywords ", " errMsg
+
+kanjiToIndices :: Query -> Kanji -> Indices -> String
+kanjiToIndices query kanji indices = do
+  let errMsg = "Usage: node index.js -i 10 20"
+  query_rtk query kanji indices ", " errMsg
+
 -- | given an collection of indices return the RTK frames for each
 -- | index as a string, otherwise return the error message parameter
-frames :: Query -> Keys -> Values -> String -> String -> String
-frames query indices kanji separator errMsg = do
+indicesToFrames :: Query -> Keys -> Values -> String
+indicesToFrames query indices kanji = do
   let mxs = search_rtk query indices kanji 
   case mxs of
-    Just xs -> intercalate separator $ 
+    Just xs -> intercalate " " $ 
       zipWith (<>) xs $ (\x -> "[" <> x <> "]") <$> query
-    Nothing -> errMsg
+    Nothing -> "Usage: node index.js -f 10 20"
 
 
-prims 
+primsToFrames 
   :: Array String 
   -> Array String 
   -> Array String 
   -> String
-prims ps cs ks = go cs ks 1 ""
+primsToFrames ps cs ks = go cs ks 1 ""
   where
     components s = trim <$> split (Pattern ";") s
     hasPrims xs = [] == (difference ps $ intersect ps xs)
