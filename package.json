@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "ps": "spago bundle-app --main Main --to index.js",
+    "build": "spago bundle-app --main Main --to index.js",
     "dev": "spago bundle-app --watch --main Main --to index.js --then \"node index.js -i 忠告\"",
     "test": "spago test --watch --main Test.Main"
   },

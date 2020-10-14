@@ -9,6 +9,7 @@ import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
 import Foreign (Foreign)
+
 import Params (cmdLineParser)
 import RTK (indicesToFrames, kanjiToIndices, kanjiToKeywords, primsToFrames)
 import Types (RTKData, RTKArgs)
@@ -18,7 +19,7 @@ type Client = Foreign
 
 foreign import _authorizeClient :: EffectFnAff Client
 foreign import _gsRun :: Client -> EffectFnAff RTKData
-foreign import _pbcopy :: String -> EffectFnAff String
+foreign import _pbcopy :: String -> EffectFnAff Unit
 
 authorize :: Aff Client
 authorize = fromEffectFnAff _authorizeClient
@@ -26,7 +27,7 @@ authorize = fromEffectFnAff _authorizeClient
 gsRun :: Client -> Aff RTKData
 gsRun client = fromEffectFnAff $ _gsRun client
 
-pbCopy :: String -> Aff String
+pbCopy :: String -> Aff Unit
 pbCopy result = fromEffectFnAff $ _pbcopy result
 
 work :: RTKArgs -> RTKData -> String
@@ -46,5 +47,6 @@ main = launchAff_ do
     doWork xs = do
       client <- authorize
       rtkData <- gsRun client
-      result <- pbCopy $ work xs rtkData
+      let result = work xs rtkData
+      pbCopy result
       Console.log result
