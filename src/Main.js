@@ -1,26 +1,5 @@
 const {google} = require ('googleapis');
 const keys = require('./api-keys.json');
-const fs = require("fs");
-
-
-exports._pbcopy = function pbcopy(data) {
-    return async function (onError, onSuccess) {
-        const { spawn } = require('child_process');
-        const pbcopy = spawn('pbcopy');
-        //const proc = require('child_process').spawn('pbcopy');
-        //await proc.stdin.write(data);
-        //proc.stdin.end();
-        await pbcopy.stdin.write(data);
-        pbcopy.stdin.end();
-
-        onSuccess();
-
-        return function (cancelError, onCancelerError, onCancelerSuccess) {
-            onCancelerSuccess();
-        };
-    }
-}
-
 
 exports._gsRun = function (client) {
     return async function (onError, onSuccess) {
