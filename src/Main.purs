@@ -12,8 +12,8 @@ import Effect.Class.Console as Console
 import OSX.Utils (pbcopy, pbpaste)
 import Params (cmdLineParser)
 import RTK (indicesToFrames, kanjiToIndices, kanjiToKeywords, primsToFrames)
-import Google.Auth (auth)
-import Google.Client (Client)
+import Google.Auth (Client, auth)
+import Google.JWT (jwt)
 import Types (RTKData, RTKArgs)
 
 foreign import _gsRun :: Client -> EffectFnAff RTKData
@@ -37,6 +37,6 @@ main = launchAff_ do
   either Console.error (\xs -> doWork xs) args_
   where 
     doWork xs = do
-      rtkData <- gsRun =<< auth
+      rtkData <- gsRun =<< auth =<< jwt
       pbcopy $ work xs rtkData
       pbpaste

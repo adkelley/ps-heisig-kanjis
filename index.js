@@ -2327,50 +2327,47 @@ var PS = {};
       };
   }
 })(PS["Google.Auth"] = PS["Google.Auth"] || {});
+(function($PS) {
+  "use strict";
+  $PS["Google.Auth"] = $PS["Google.Auth"] || {};
+  var exports = $PS["Google.Auth"];
+  var $foreign = $PS["Google.Auth"];
+  var Effect_Aff_Compat = $PS["Effect.Aff.Compat"];                
+  var auth = function (token) {
+      return Effect_Aff_Compat.fromEffectFnAff($foreign["_auth"](token));
+  };
+  exports["auth"] = auth;
+})(PS);
 (function(exports) {
   "use strict";
 
   const {google} = require ('googleapis');
   const keys = require('./api-keys.json');
 
-  exports._client = function(onError, onSuccess) {
-     const jwtClient = new google.auth.JWT(
+  exports._jwt = function(onError, onSuccess) {
+     const jwt = new google.auth.JWT(
           keys.client_email, 
           null, 
           keys.private_key, 
           ['https://www.googleapis.com/auth/spreadsheets.readonly'])
        ;
 
-     onSuccess(jwtClient);
+     onSuccess(jwt);
 
      return function (cancelError, onCancelerError, onCancelerSuccess) {
          onCancelerSuccess();
      };
    
   }
-})(PS["Google.Client"] = PS["Google.Client"] || {});
+})(PS["Google.JWT"] = PS["Google.JWT"] || {});
 (function($PS) {
   "use strict";
-  $PS["Google.Client"] = $PS["Google.Client"] || {};
-  var exports = $PS["Google.Client"];
-  var $foreign = $PS["Google.Client"];
+  $PS["Google.JWT"] = $PS["Google.JWT"] || {};
+  var exports = $PS["Google.JWT"];
+  var $foreign = $PS["Google.JWT"];
   var Effect_Aff_Compat = $PS["Effect.Aff.Compat"];                
-  var client = Effect_Aff_Compat.fromEffectFnAff($foreign["_client"]);
-  exports["client"] = client;
-})(PS);
-(function($PS) {
-  "use strict";
-  $PS["Google.Auth"] = $PS["Google.Auth"] || {};
-  var exports = $PS["Google.Auth"];
-  var $foreign = $PS["Google.Auth"];
-  var Control_Bind = $PS["Control.Bind"];
-  var Effect_Aff = $PS["Effect.Aff"];
-  var Effect_Aff_Compat = $PS["Effect.Aff.Compat"];
-  var Google_Client = $PS["Google.Client"];                
-  var auth = Control_Bind.bind(Effect_Aff.bindAff)(Google_Client.client)(function (jwtClient) {
-      return Effect_Aff_Compat.fromEffectFnAff($foreign["_auth"](jwtClient));
-  });
-  exports["auth"] = auth;
+  var jwt = Effect_Aff_Compat.fromEffectFnAff($foreign["_jwt"]);
+  exports["jwt"] = jwt;
 })(PS);
 (function(exports) {
   const {google} = require ('googleapis');
@@ -2708,6 +2705,7 @@ var PS = {};
   var Effect_Class = $PS["Effect.Class"];
   var Effect_Class_Console = $PS["Effect.Class.Console"];
   var Google_Auth = $PS["Google.Auth"];
+  var Google_JWT = $PS["Google.JWT"];
   var OSX_Utils = $PS["OSX.Utils"];
   var Params = $PS["Params"];
   var RTK = $PS["RTK"];                
@@ -2733,7 +2731,7 @@ var PS = {};
   };
   var main = (function () {
       var doWork = function (xs) {
-          return Control_Bind.bind(Effect_Aff.bindAff)(Control_Bind.bindFlipped(Effect_Aff.bindAff)(gsRun)(Google_Auth.auth))(function (rtkData) {
+          return Control_Bind.bind(Effect_Aff.bindAff)(Control_Bind.bindFlipped(Effect_Aff.bindAff)(gsRun)(Control_Bind.bindFlipped(Effect_Aff.bindAff)(Google_Auth.auth)(Google_JWT.jwt)))(function (rtkData) {
               return Control_Bind.discard(Control_Bind.discardUnit)(Effect_Aff.bindAff)(OSX_Utils.pbcopy(work(xs)(rtkData)))(function () {
                   return OSX_Utils.pbpaste;
               });
