@@ -1,5 +1,4 @@
 const {google} = require ('googleapis');
-const keys = require('./api-keys.json');
 
 exports._gsRun = function (client) {
     return async function (onError, onSuccess) {
@@ -34,33 +33,3 @@ exports._gsRun = function (client) {
 }
 
 
-// type JWT =
-//   { access_token :: String
-//   , token_type :: String
-//   , expiry_date :: Int
-//   , id_token :: String
-//   , refresh_token :: String
-// }
-//
-exports._authorizeClient = async function (onError, onSuccess) {
-    const client = new google.auth.JWT(
-        keys.client_email, 
-        null, 
-        keys.private_key, 
-        ['https://www.googleapis.com/auth/spreadsheets.readonly']
-    );
-
-    await client.authorize((err, res) => {
-        if (err) {
-            onError(err);
-            return;
-        }
-
-        onSuccess(client);
-
-    });
-
-    return function (cancelError, onCancelerError, onCancelerSuccess) {
-        onCancelerSuccess();
-    };
-};

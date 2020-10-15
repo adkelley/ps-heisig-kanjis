@@ -1,4 +1,5 @@
 # README
+1. Used `osa notify` to send notifications that ps was building
+2. Dropped nodemon in favor of `spago --then`
+
 ## TODOS:
-1. Use growl or notify send to notify-send the modules being built by spago. See
-[notify-send](https://www.npmjs.com/package/notify-send)

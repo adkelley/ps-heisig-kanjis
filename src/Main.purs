@@ -8,20 +8,16 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
-import Foreign (Foreign)
+
 import OSX.Utils (pbcopy, pbpaste)
 import Params (cmdLineParser)
 import RTK (indicesToFrames, kanjiToIndices, kanjiToKeywords, primsToFrames)
+import Google.Auth (auth)
+import Google.Client (Client)
 import Types (RTKData, RTKArgs)
 
-type Client = Foreign
-
-
-foreign import _authorizeClient :: EffectFnAff Client
 foreign import _gsRun :: Client -> EffectFnAff RTKData
 
-authorize :: Aff Client
-authorize = fromEffectFnAff _authorizeClient
 
 gsRun :: Client -> Aff RTKData
 gsRun client = fromEffectFnAff $ _gsRun client
@@ -41,7 +37,6 @@ main = launchAff_ do
   either Console.error (\xs -> doWork xs) args_
   where 
     doWork xs = do
-      client <- authorize
-      rtkData <- gsRun client
+      rtkData <- gsRun =<< auth
       pbcopy $ work xs rtkData
       pbpaste
