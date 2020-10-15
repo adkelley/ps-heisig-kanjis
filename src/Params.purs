@@ -9,14 +9,28 @@ import Node.Process (argv)
 import Data.String.Common (split)
 import Data.String.Pattern (Pattern (..)) 
 import Data.Either (Either (..))
+import Data.Maybe (Maybe (..))
+import Data.Int.Parse (parseInt, toRadix)
 
 import Types (RTKArgs)
+
+type Error = String
 
 args :: Effect (List String)
 args = do
   xs <- argv
   pure $ drop 2 $ fromFoldable xs
   
+
+-- | A RTK index should be > 0 and < 3001
+validateIndex :: String -> Either Error String
+validateIndex index = 
+  case (parseInt index $ toRadix 10) of
+    (Just _) -> Right index
+    Nothing -> Left "Bad index"
+
+--validateIndices :: List String -> Array String
+
 
 mkArgs :: String -> Array String -> RTKArgs
 mkArgs cmd args_ = {cmd, args: args_}
@@ -26,7 +40,7 @@ splitNode (Nil) = [""]
 splitNode (x : _) = 
   split (Pattern "") x
 
-cmdLineParser :: Effect (Either String RTKArgs)
+cmdLineParser :: Effect (Either Error RTKArgs)
 cmdLineParser = do
   args_ <- args
   pure $ case args_ of
