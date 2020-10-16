@@ -34,7 +34,11 @@ work clArgs rtk =
 main :: Effect Unit
 main = launchAff_ do
   args_ <- liftEffect cmdLineParser
-  either (\e -> Console.error $ "Error: " <> e) 
+  either (\e -> do 
+            let errMsg = "Error: " <> e
+            Console.error errMsg
+            pbcopy errMsg
+            pbpaste) 
          (\xs -> doWork xs) args_
   where 
     doWork xs = do
