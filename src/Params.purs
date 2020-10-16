@@ -10,37 +10,29 @@ import Node.Process (argv)
 import Data.String.Common (split)
 import Data.String.Pattern (Pattern (..)) 
 import Data.Either (Either (..))
-import Data.Maybe (Maybe (..))
+import Data.Maybe (fromMaybe)
 import Data.Int.Parse (parseInt, toRadix)
 
 import Types (RTKArgs)
 
 type Error = String
 
-args :: Effect (List String)
-args = do
+getArgs :: Effect (List String)
+getArgs = do
   xs <- argv
   pure $ drop 2 $ fromFoldable xs
   
-
-inRange :: Int -> Maybe Int
-inRange x = 
-  if (x > 0 && x < 3001)
-    then Just x
-    else Nothing
-
-
 -- | A RTK index should be > 0 and < 3001
-validateIndex :: String -> Either Error String
-validateIndex index = do
-  let x = inRange =<< (parseInt index $ toRadix 10)
-  case x of
-     (Just _) -> Right index
-     Nothing -> Left "RTK index must be > 0 and < 3001"
+inRange :: String -> Either Error String
+inRange index = do
+  let i = fromMaybe 0 $ parseInt index $ toRadix 10 
+  if (i > 0 && i < 3001)
+    then Right index
+    else Left "RTK index must be > 0 and < 3001"
 
 
 validateIndices :: List String -> Either Error (List String)
-validateIndices xs = traverse validateIndex xs
+validateIndices xs = traverse inRange xs
 
 
 mkArgs :: String -> Array String -> Either Error RTKArgs
@@ -53,7 +45,7 @@ splitNode (x : _) =
 
 cmdLineParser :: Effect (Either Error RTKArgs)
 cmdLineParser = do
-  args_ <- args
+  args_ <- getArgs
   pure $ case args_ of
     "-p" : rest -> mkArgs "primsToFrames" $ A.fromFoldable rest
     "-k" : rest -> mkArgs "kanjiToKeywords" $ splitNode rest
