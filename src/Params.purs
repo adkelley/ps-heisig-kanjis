@@ -3,6 +3,7 @@ module Params (cmdLineParser) where
 import Prelude
 
 import Data.List (List (..), fromFoldable, drop, (:)) 
+import Data.Traversable (traverse)
 import Data.Array (fromFoldable) as A
 import Effect (Effect)
 import Node.Process (argv)
@@ -22,18 +23,28 @@ args = do
   pure $ drop 2 $ fromFoldable xs
   
 
+inRange :: Int -> Maybe Int
+inRange x = 
+  if (x > 0 && x < 3001)
+    then Just x
+    else Nothing
+
+
 -- | A RTK index should be > 0 and < 3001
 validateIndex :: String -> Either Error String
-validateIndex index = 
-  case (parseInt index $ toRadix 10) of
-    (Just _) -> Right index
-    Nothing -> Left "Bad index"
+validateIndex index = do
+  let x = inRange =<< (parseInt index $ toRadix 10)
+  case x of
+     (Just _) -> Right index
+     Nothing -> Left "RTK index must be > 0 and < 3001"
 
---validateIndices :: List String -> Array String
+
+validateIndices :: List String -> Either Error (List String)
+validateIndices xs = traverse validateIndex xs
 
 
-mkArgs :: String -> Array String -> RTKArgs
-mkArgs cmd args_ = {cmd, args: args_}
+mkArgs :: String -> Array String -> Either Error RTKArgs
+mkArgs cmd args_ = Right {cmd, args: args_}
 
 splitNode :: List String -> Array String
 splitNode (Nil) = [""]
@@ -44,10 +55,11 @@ cmdLineParser :: Effect (Either Error RTKArgs)
 cmdLineParser = do
   args_ <- args
   pure $ case args_ of
-    "-p" : rest -> Right $ mkArgs "primsToFrames" $ A.fromFoldable rest
-    "-k" : rest -> Right $ mkArgs "kanjiToKeywords" $ splitNode rest
-    "-i" : rest -> Right $ mkArgs "kanjiToIndices" $ splitNode rest 
-    "-f" : rest -> Right $ mkArgs "indicesToFrames" $ A.fromFoldable rest 
+    "-p" : rest -> mkArgs "primsToFrames" $ A.fromFoldable rest
+    "-k" : rest -> mkArgs "kanjiToKeywords" $ splitNode rest
+    "-i" : rest -> mkArgs "kanjiToIndices" $ splitNode rest 
+    "-f" : rest -> (validateIndices rest) >>= 
+                      (\xs -> mkArgs "indicesToFrames" $ A.fromFoldable xs) 
     Nil -> Left $ "Usage: node index.js <cmd> <arguments>"
     _ -> Left $ "Usage: node index.js <cmd> <arguments>"
 

@@ -34,7 +34,8 @@ work clArgs rtk =
 main :: Effect Unit
 main = launchAff_ do
   args_ <- liftEffect cmdLineParser
-  either Console.error (\xs -> doWork xs) args_
+  either (\e -> Console.error $ "Error: " <> e) 
+         (\xs -> doWork xs) args_
   where 
     doWork xs = do
       rtkData <- gsRun =<< auth =<< jwt
