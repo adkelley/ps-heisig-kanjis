@@ -23,17 +23,15 @@ getArgs = do
   xs <- argv
   pure $ drop 2 $ fromFoldable xs
   
+
 -- | A RTK index should be an integer > 0 and < 3001
-inRange :: String -> Either Error String
-inRange index = do
+isIndex :: String -> Either Error String
+isIndex index = do
   let i = fromMaybe 0 $ parseInt index $ toRadix 10 
   if (i > 0 && i < 3001)
     then Right index
     else Left "RTK index must be integer > 0 and < 3001"
 
-
-validateIndices :: List String -> Either Error (List String)
-validateIndices = traverse inRange
 
 -- UNICODE RANGE : DESCRIPTION
 -- 
@@ -47,8 +45,6 @@ validateIndices = traverse inRange
 -- 2605-2606 : Stars
 -- 2190-2195 : Arrows
 -- u203B     : Weird asterisk thing
-
-
 isKanji :: String -> Either Error String
 isKanji kanji = do 
   expression <- regex "[\\u4E00-\\u9FAF]" $ parseFlags "g" 
@@ -57,12 +53,18 @@ isKanji kanji = do
     else Left "Invalid jukugo"
 
 
-validateJukugo :: List String -> Either Error (List String)
-validateJukugo = traverse isKanji
+-- | A primitive must be lower case english string
+isPrim :: String -> Either Error String
+isPrim prim = do
+  expression <- regex "[a-z]" $ parseFlags "g" 
+  if (test expression prim)
+    then Right prim
+    else Left "Primatives must be lower case"
 
 
 mkArgs :: String -> Array String -> Either Error RTKArgs
 mkArgs cmd args_ = Right {cmd, args: args_}
+
 
 splitNode :: List String -> Array String
 splitNode (Nil) = [""]
@@ -73,12 +75,13 @@ cmdLineParser :: Effect (Either Error RTKArgs)
 cmdLineParser = do
   args <- getArgs
   pure $ case args of
-    "-p" : rest -> mkArgs "primsToFrames" $ A.fromFoldable rest
-    "-k" : rest -> (validateJukugo rest) >>=
+    "-p" : rest -> (traverse isPrim rest) >>=
+                     (\xs -> mkArgs "primsToFrames" $ A.fromFoldable xs)
+    "-k" : rest -> (traverse isKanji rest) >>=
                        (\xs -> mkArgs "kanjiToKeywords" $ splitNode xs)
-    "-i" : rest -> (validateJukugo rest) >>= 
+    "-i" : rest -> (traverse isKanji rest) >>= 
                      (\xs -> mkArgs "kanjiToIndices" $ splitNode xs) 
-    "-f" : rest -> (validateIndices rest) >>= 
+    "-f" : rest -> (traverse isIndex rest) >>= 
                       (\xs -> mkArgs "indicesToFrames" $ A.fromFoldable xs) 
     Nil -> Left $ "Usage: node index.js <cmd> <arguments>"
     _ -> Left $ "Usage: node index.js <cmd> <arguments>"
