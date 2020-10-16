@@ -30,7 +30,7 @@ isIndex index = do
   let i = fromMaybe 0 $ parseInt index $ toRadix 10 
   if (i > 0 && i < 3001)
     then Right index
-    else Left "RTK index must be integer > 0 and < 3001"
+    else Left "RTK indices must be integers > 0 and < 3001"
 
 
 -- UNICODE RANGE : DESCRIPTION
@@ -50,7 +50,7 @@ isKanji kanji = do
   expression <- regex "[\\u4E00-\\u9FAF]" $ parseFlags "g" 
   if (test expression kanji)
     then Right kanji
-    else Left "Invalid jukugo"
+    else Left "A jukugo must be common or uncommon kanji"
 
 
 -- | A primitive must be lower case english string
@@ -59,7 +59,7 @@ isPrim prim = do
   expression <- regex "[a-z]" $ parseFlags "g" 
   if (test expression prim)
     then Right prim
-    else Left "Primatives must be lower case"
+    else Left "Primatives must be lower case english strings"
 
 
 mkArgs :: String -> Array String -> Either Error RTKArgs
