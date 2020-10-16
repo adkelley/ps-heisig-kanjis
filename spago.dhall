@@ -12,6 +12,7 @@ You can edit this file as you like.
   , "foreign"
   , "lists"
   , "node-process"
+  , "parseint"
   , "psci-support"
   , "strings"
   , "test-unit"

@@ -1,4 +1,5 @@
 api-keys.json
+index.js
 /lib/*
 /bower_components/
 /node_modules/
