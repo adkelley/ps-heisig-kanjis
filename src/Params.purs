@@ -50,7 +50,7 @@ isKanji kanji = do
   expression <- regex "[\\u4E00-\\u9FAF]" $ parseFlags "g" 
   if (test expression kanji)
     then Right kanji
-    else Left "A jukugo must be common or uncommon kanji"
+    else Left "A jukugo must be a kanji or kanji compound"
 
 
 -- | A primitive must be lower case english string

@@ -34,13 +34,15 @@ work clArgs rtk =
 main :: Effect Unit
 main = launchAff_ do
   args_ <- liftEffect cmdLineParser
-  either (\e -> do 
-            let errMsg = "Error: " <> e
-            Console.error errMsg
-            pbcopy errMsg
-            pbpaste) 
+  either (\e -> doError e)
          (\xs -> doWork xs) args_
   where 
+    doError msg = do
+      let errMsg = "Error: " <> msg
+      pbcopy errMsg
+      pbpaste 
+      Console.error msg
+
     doWork xs = do
       rtkData <- gsRun =<< auth =<< jwt
       pbcopy $ work xs rtkData
