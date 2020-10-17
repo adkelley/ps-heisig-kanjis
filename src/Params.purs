@@ -76,13 +76,13 @@ cmdLineParser = do
   args <- getArgs
   pure $ case args of
     "-p" : rest -> (traverse isPrim rest) >>=
-                     (\xs -> mkArgs "primsToFrames" $ A.fromFoldable xs)
+                     (\xs -> mkArgs "-p" $ A.fromFoldable xs)
     "-k" : rest -> (traverse isKanji rest) >>=
-                       (\xs -> mkArgs "kanjiToKeywords" $ splitNode xs)
+                       (\xs -> mkArgs "-k" $ splitNode xs)
     "-i" : rest -> (traverse isKanji rest) >>= 
-                     (\xs -> mkArgs "kanjiToIndices" $ splitNode xs) 
+                     (\xs -> mkArgs "-i" $ splitNode xs) 
     "-f" : rest -> (traverse isIndex rest) >>= 
-                      (\xs -> mkArgs "indicesToFrames" $ A.fromFoldable xs) 
+                      (\xs -> mkArgs "-f" $ A.fromFoldable xs) 
     Nil -> Left $ "Usage: node index.js <cmd> <arguments>"
     _ -> Left $ "Usage: node index.js <cmd> <arguments>"
 

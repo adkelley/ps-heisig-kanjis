@@ -25,11 +25,11 @@ gsRun client = fromEffectFnAff $ _gsRun client
 work :: RTKArgs -> RTKData -> String
 work clArgs rtk =
   case clArgs of
-    {cmd: "primsToFrames", args} -> primsToFrames args rtk.components rtk.kanji
-    {cmd: "indicesToFrames", args} -> indicesToFrames args rtk.indices rtk.kanji
-    {cmd: "kanjiToKeywords", args} -> kanjiToKeywords args rtk.kanji rtk.keywords
-    {cmd: "kanjiToIndices", args} -> kanjiToIndices args rtk.kanji rtk.indices
-    _ -> "Undefined"
+    {cmd: "-p", args} -> primsToFrames args rtk.components rtk.kanji
+    {cmd: "-f", args} -> indicesToFrames args rtk.indices rtk.kanji
+    {cmd: "-k", args} -> kanjiToKeywords args rtk.kanji rtk.keywords
+    {cmd: "-i", args} -> kanjiToIndices args rtk.kanji rtk.indices
+    _ -> ""
 
 main :: Effect Unit
 main = launchAff_ do

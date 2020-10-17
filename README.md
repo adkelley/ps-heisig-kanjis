@@ -7,5 +7,9 @@
 
 ## TODOS:
 * Migrate Params.purs to [purescript-optparse](https://pursuit.purescript.org/packages/purescript-optparse/3.0.0)
-* Decide to support both Alfred and terminal.  If terminal, then have a flag
-  that says you're using the terminal since this is a rare case
+* Store token and check it's validity
+* Store work functions in Types.purs
+
+## REFERENCES
+[Google Sheets
+API](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/batchGet)

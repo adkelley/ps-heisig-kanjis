@@ -16,15 +16,21 @@ exports._gsRun = function (client) {
             majorDimension: 'COLUMNS'
         };
 
-        const data = await gsapi.spreadsheets.values.batchGet(opt);
+        try {
+          const data = await gsapi.spreadsheets.values.batchGet(opt);
 
-        const result = new Object();
-        result.kanji = data.data.valueRanges[0].values[0];
-        result.indices = data.data.valueRanges[1].values[0];
-        result.keywords = data.data.valueRanges[2].values[0];
-        result.components = data.data.valueRanges[3].values[0];
+          const result = new Object();
+          result.kanji = data.data.valueRanges[0].values[0];
+          result.indices = data.data.valueRanges[1].values[0];
+          result.keywords = data.data.valueRanges[2].values[0];
+          result.components = data.data.valueRanges[3].values[0];
 
-        onSuccess(result)
+          onSuccess(result);
+
+        } catch (err) {
+            onError(err);
+            return;
+        }
 
         return function (cancelError, onCancelerError, onCancelerSuccess) {
             onCancelerSuccess();
