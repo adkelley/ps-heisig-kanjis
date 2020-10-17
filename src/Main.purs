@@ -3,10 +3,10 @@ module Main (main) where
 import Prelude
 
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Exception (Error)
+import Effect.Aff (Aff, attempt, launchAff_)
 import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
 import Effect.Class (liftEffect)
---import Effect.Class.Console as Console
 import Data.Either (Either (..), either)
 
 import OSX.Utils (pbcopy, pbpaste)
@@ -14,15 +14,15 @@ import Params (cmdLineParser)
 import RTK (indicesToFrames, kanjiToIndices, kanjiToKeywords, primsToFrames)
 import Google.Auth (Client, auth)
 import Google.JWT (jwt)
-import Types (RTKData, RTKArgs, Error)
+import Types (RTKData, RTKArgs)
 
 foreign import _gsRun :: Client -> EffectFnAff RTKData
 
 
-gsRun :: Client -> Aff RTKData
-gsRun client = fromEffectFnAff $ _gsRun client
+gsRun :: Client -> Aff (Either Error RTKData)
+gsRun client = attempt $ fromEffectFnAff $ _gsRun client
 
-work :: RTKArgs -> RTKData -> Either Error String
+work :: RTKArgs -> RTKData -> Either String String
 work {cmd, args} rtk =
   case cmd of
     "-p" -> primsToFrames args rtk.components rtk.kanji
@@ -43,6 +43,9 @@ main = launchAff_ do
 
     doWork xs = do
       rtkData <- gsRun =<< auth =<< jwt
-      case (work xs rtkData) of
-        Right s -> paste s 
-        Left e -> paste e
+      case rtkData of 
+        Left e -> paste $ show e
+        Right ys -> 
+          case (work xs ys) of
+            Right s -> paste s 
+            Left e -> paste e

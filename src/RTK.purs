@@ -12,7 +12,7 @@ import Data.Maybe (Maybe (..), fromMaybe)
 import Data.String (Pattern (..), split, trim)
 import Data.Traversable (traverse)
 
-import Types (Kanji, Keywords, Query, Indices, Error)
+import Types (Kanji, Keywords, Query, Error, Indices)
 
 -- TODO: Can this be a newtype?
 type Separator = String
