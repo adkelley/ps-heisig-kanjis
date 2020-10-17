@@ -29,7 +29,7 @@ work clArgs rtk =
     {cmd: "-f", args} -> indicesToFrames args rtk.indices rtk.kanji
     {cmd: "-k", args} -> kanjiToKeywords args rtk.kanji rtk.keywords
     {cmd: "-i", args} -> kanjiToIndices args rtk.kanji rtk.indices
-    _ -> ""
+    _ -> "Something went wrong!"
 
 main :: Effect Unit
 main = launchAff_ do
