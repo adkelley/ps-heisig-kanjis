@@ -34,19 +34,15 @@ work {cmd, args} rtk =
 main :: Effect Unit
 main = launchAff_ do
   args <- liftEffect cmdLineParser
-  either (\e -> doError e)
+  either (\e -> paste $ "Error: " <> e)
          (\as -> doWork as) args
   where 
-    doError e = do
-      pbcopy $ "Error: " <> e
+    paste result = do
+      pbcopy result
       pbpaste 
 
     doWork xs = do
       rtkData <- gsRun =<< auth =<< jwt
       case (work xs rtkData) of
-        Right s -> do
-          pbcopy s
-          pbpaste
-        Left e -> do
-          pbcopy e
-          pbpaste
+        Right s -> paste s 
+        Left e -> paste e
