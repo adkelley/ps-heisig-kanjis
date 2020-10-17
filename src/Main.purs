@@ -23,12 +23,12 @@ gsRun :: Client -> Aff RTKData
 gsRun client = fromEffectFnAff $ _gsRun client
 
 work :: RTKArgs -> RTKData -> Either Error String
-work clArgs rtk =
-  case clArgs of
-    {cmd: "-p", args} -> primsToFrames args rtk.components rtk.kanji
-    {cmd: "-f", args} -> indicesToFrames args rtk.indices rtk.kanji
-    {cmd: "-k", args} -> kanjiToKeywords args rtk.kanji rtk.keywords
-    {cmd: "-i", args} -> kanjiToIndices args rtk.kanji rtk.indices
+work {cmd, args} rtk =
+  case cmd of
+    "-p" -> primsToFrames args rtk.components rtk.kanji
+    "-f" -> indicesToFrames args rtk.indices rtk.kanji
+    "-k" -> kanjiToKeywords args rtk.kanji rtk.keywords
+    "-i" -> kanjiToIndices args rtk.kanji rtk.indices
     _ -> Left "Something went wrong!"
 
 main :: Effect Unit
