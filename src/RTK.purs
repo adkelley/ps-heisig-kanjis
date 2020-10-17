@@ -1,4 +1,4 @@
-module RTK ( query_rtk, kanjiToKeywords, primsToFrames
+module RTK ( kanjiToKeywords, primsToFrames
            , kanjiToIndices, indicesToFrames) where
 
 import Prelude
@@ -7,11 +7,12 @@ import Data.Array (elemIndex, index, intercalate, uncons
                   , zipWith, intersect, difference
                   , head, tail
                   )
+import Data.Either (Either (..))
 import Data.Maybe (Maybe (..), fromMaybe)
 import Data.String (Pattern (..), split, trim)
 import Data.Traversable (traverse)
 
-import Types (Kanji, Keywords, Query, Indices)
+import Types (Kanji, Keywords, Query, Indices, Error)
 
 -- TODO: Can this be a newtype?
 type Separator = String
@@ -26,48 +27,56 @@ search_rtk
 search_rtk query keys values =
   traverse (\x -> elemIndex x keys >>= index values) query
 
-rtk_result :: String -> Maybe String -> String
-rtk_result errMsg result = 
-  case result of
-    Just s -> s
-    Nothing -> errMsg
+--rtk_result :: String -> Either Error String
+--rtk_result errMsg result = 
+--  case result of
+--    Just s -> Right s
+--    Nothing -> Left "Something went wrong"
 
 -- | Given a query, keys and values, find the query's values
 -- | and append them into a string using a separator. If there's
 -- | and error then return the error message parameter
-query_rtk :: Query -> Keys -> Values -> String -> String -> String
-query_rtk query keys values separator errMsg = 
-  rtk_result errMsg $ 
-    liftA1 (\xs -> intercalate separator xs) $ 
-    search_rtk query keys values
+--query_rtk :: Query -> Keys -> Values -> String -> Either Error String
+--query_rtk query keys values separator = 
+--  rtk_result $ 
+--    liftA1 (\xs -> intercalate separator xs) $ 
+--    search_rtk query keys values
 
-kanjiToKeywords :: Query -> Kanji -> Keywords -> String
+kanjiToKeywords :: Query -> Kanji -> Keywords -> Either Error String
 kanjiToKeywords query kanji keywords = do
-  let errMsg = "Usage: node index.js -k 熟語"
-  query_rtk query kanji keywords ", " errMsg
+  let result = liftA1 (\xs -> intercalate ", " xs) $ 
+                 search_rtk query kanji keywords
+  case result of
+    Just s -> Right s
+    Nothing -> Left "kanjiToKeywords error"
+--  query_rtk query kanji keywords ", "
 
-kanjiToIndices :: Query -> Kanji -> Indices -> String
+kanjiToIndices :: Query -> Kanji -> Indices -> Either Error String
 kanjiToIndices query kanji indices = do
-  let errMsg = "Usage: node index.js -i 10 20"
-  query_rtk query kanji indices ", " errMsg
+  let result = liftA1 (\xs -> intercalate ", " xs) $ 
+               search_rtk query kanji indices
+  case result of
+    Just s -> Right s
+    Nothing -> Left "kanjiToIndices error"
+--  query_rtk query kanji indices ", " 
 
 -- | given an collection of indices return the RTK frames for each
 -- | index as a string, otherwise return the error message parameter
-indicesToFrames :: Query -> Keys -> Values -> String
+indicesToFrames :: Query -> Keys -> Values -> Either Error String
 indicesToFrames query indices kanji = do
   let mxs = search_rtk query indices kanji 
   case mxs of
-    Just xs -> intercalate " " $ 
+    Just xs -> Right $ intercalate " " $ 
       zipWith (<>) xs $ (\x -> "[" <> x <> "]") <$> query
-    Nothing -> "Usage: node index.js -f 10 20"
+    Nothing -> Left $ "indicesToFrames error"
 
 
 primsToFrames 
   :: Array String 
   -> Array String 
   -> Array String 
-  -> String
-primsToFrames ps cs ks = go cs ks 1 ""
+  -> Either Error String
+primsToFrames ps cs ks = Right $ go cs ks 1 ""
   where
     components s = trim <$> split (Pattern ";") s
     hasPrims xs = [] == (difference ps $ intersect ps xs)

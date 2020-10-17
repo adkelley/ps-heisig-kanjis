@@ -1,5 +1,5 @@
 module Types ( RTKArgs, RTKData, Kanji
-             , Keywords, Indices, Query
+             , Keywords, Indices, Query, Error
              ) where
 
 type RTKData =
@@ -18,3 +18,5 @@ type Kanji = Array String
 type Indices = Array String
 type Keywords = Array String
 type Query = Array String
+
+type Error = String

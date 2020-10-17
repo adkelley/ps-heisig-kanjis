@@ -14,9 +14,7 @@ import Data.Maybe (fromMaybe)
 import Data.Int.Parse (parseInt, toRadix)
 import Data.String.Regex (regex, test, parseFlags)
 
-import Types (RTKArgs)
-
-type Error = String
+import Types (RTKArgs, Error)
 
 getArgs :: Effect (List String)
 getArgs = do
