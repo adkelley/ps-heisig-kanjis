@@ -40,8 +40,8 @@ main = launchAff_ do
       pbcopy result
       pbpaste 
 
-    doWork as =
-      (attempt $ gsRun =<< auth =<< jwt) >>=
-         either (\e -> paste $ show e) 
-                (\ds -> paste $ 
-                   either identity identity (work as ds)) 
+    doWork args =
+      either (\googErr -> paste $ show googErr) 
+             (\rtk -> paste $ 
+                either identity identity (work args rtk)) 
+              =<< (attempt $ gsRun =<< auth =<< jwt)
