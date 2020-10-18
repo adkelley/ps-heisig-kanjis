@@ -1,10 +1,10 @@
 "use strict";
 
 const {google} = require ('googleapis');
-const keys = require('./api-keys.json');
 
 exports._jwt = function(onError, onSuccess) {
    try {
+       const keys = require('./api-keys.json');
        const jwt = new google.auth.JWT(
             keys.client_email, 
             null, 

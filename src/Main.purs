@@ -3,7 +3,6 @@ module Main (main) where
 import Prelude
 
 import Effect (Effect)
-import Effect.Exception (Error)
 import Effect.Aff (Aff, attempt, launchAff_)
 import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
 import Effect.Class (liftEffect)
@@ -19,8 +18,8 @@ import Types (RTKData, RTKArgs)
 foreign import _gsRun :: Client -> EffectFnAff RTKData
 
 
-gsRun :: Client -> Aff (Either Error RTKData)
-gsRun client = attempt $ fromEffectFnAff $ _gsRun client
+gsRun :: Client -> Aff RTKData
+gsRun client = fromEffectFnAff $ _gsRun client
 
 work :: RTKArgs -> RTKData -> Either String String
 work {cmd, args} rtk =
@@ -33,19 +32,16 @@ work {cmd, args} rtk =
 
 main :: Effect Unit
 main = launchAff_ do
-  args <- liftEffect cmdLineParser
+  eArgs <- liftEffect cmdLineParser
   either (\e -> paste $ "Error: " <> e)
-         (\as -> doWork as) args
+         (\args -> doWork args) eArgs
   where 
     paste result = do
       pbcopy result
       pbpaste 
 
-    doWork xs = do
-      rtkData <- gsRun =<< auth =<< jwt
-      case rtkData of 
-        Left e -> paste $ show e
-        Right ys -> 
-          case (work xs ys) of
-            Right s -> paste s 
-            Left e -> paste e
+    doWork as =
+      (attempt $ gsRun =<< auth =<< jwt) >>=
+         either (\e -> paste $ show e) 
+                (\ds -> paste $ 
+                   either identity identity (work as ds)) 

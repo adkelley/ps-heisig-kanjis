@@ -4,11 +4,13 @@
 2. 20201014 Created `src/OSX` library for mac related terminal commands
 3. 20201015 Created `src/Google` library for google authentication
 4. 20201016 Validated args
+5. 20201017 Error handling in .js, Data.Either.note
 
 ## TODOS:
-* Migrate Params.purs to [purescript-optparse](https://pursuit.purescript.org/packages/purescript-optparse/3.0.0)
-* Store token and check it's validity
-* Store work functions in Types.purs
+- [] Finish error handling in google functions
+- [] Migrate Params.purs to [purescript-optparse](https://pursuit.purescript.org/packages/purescript-optparse/3.0.0)
+- [] Store token and check it's validity
+- [] Store work functions in Types.purs
 
 ## REFERENCES
 [Google Sheets
