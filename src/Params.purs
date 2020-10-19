@@ -2,6 +2,8 @@ module Params (cmdLineParser) where
 
 import Prelude
 
+import Options.Applicative
+import Data.Foldable (fold)
 import Data.List (List (..), fromFoldable, drop, (:)) 
 import Data.Traversable (traverse)
 import Data.Array (fromFoldable) as A
@@ -15,6 +17,19 @@ import Data.Int.Parse (parseInt, toRadix)
 import Data.String.Regex (regex, test, parseFlags)
 
 import Types (RTKArgs, Error)
+
+data Query
+  = Keywords String
+
+keywords :: Parser Query
+keywords = ado
+  kanji <- strOption $ fold
+    [ long "keywords"
+    , short 'k'
+    , metavar "COMMAND"
+    , help "keywords command"
+    ]
+  in Keywords kanji
 
 getArgs :: Effect (List String)
 getArgs = do
@@ -69,18 +84,35 @@ splitNode (Nil) = [""]
 splitNode (x : _) = 
   split (Pattern "") x
 
+
+validate :: Query -> Either Error RTKArgs
+validate query = 
+   case query of
+     Keywords k -> (isKanji k) >>= 
+                       (\xs -> mkArgs "-k " $ split (Pattern "") xs)
+     _ -> Left $ "Usage: node index.js <cmd> <arguments>"
+
 cmdLineParser :: Effect (Either Error RTKArgs)
-cmdLineParser = do
-  args <- getArgs
-  pure $ case args of
-    "-p" : rest -> (traverse isPrim rest) >>=
-                     (\xs -> mkArgs "-p" $ A.fromFoldable xs)
-    "-k" : rest -> (traverse isKanji rest) >>=
-                       (\xs -> mkArgs "-k" $ splitNode xs)
-    "-i" : rest -> (traverse isKanji rest) >>= 
-                     (\xs -> mkArgs "-i" $ splitNode xs) 
-    "-f" : rest -> (traverse isIndex rest) >>= 
-                      (\xs -> mkArgs "-f" $ A.fromFoldable xs) 
-    Nil -> Left $ "Usage: node index.js <cmd> <arguments>"
-    _ -> Left $ "Usage: node index.js <cmd> <arguments>"
+cmdLineParser = pure $ validate =<< execParser opts
+  where
+    opts = info (keywords <**> helper)
+      ( fullDesc
+     <> progDesc "Print a greeting for TARGET"
+     <> header "hello - a test for purescript-optparse" )
+
+
+--cmdLineParser :: Effect (Either Error RTKArgs)
+--cmdLineParser = do
+--  args <- getArgs
+--  pure $ case args of
+--    "-p" : rest -> (traverse isPrim rest) >>=
+--                     (\xs -> mkArgs "-p" $ A.fromFoldable xs)
+--    "-k" : rest -> (traverse isKanji rest) >>=
+--                       (\xs -> mkArgs "-k" $ splitNode xs)
+--    "-i" : rest -> (traverse isKanji rest) >>= 
+--                     (\xs -> mkArgs "-i" $ splitNode xs) 
+--    "-f" : rest -> (traverse isIndex rest) >>= 
+--                      (\xs -> mkArgs "-f" $ A.fromFoldable xs) 
+--    Nil -> Left $ "Usage: node index.js <cmd> <arguments>"
+--    _ -> Left $ "Usage: node index.js <cmd> <arguments>"
 
