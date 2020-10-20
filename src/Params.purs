@@ -22,6 +22,7 @@ import Types (RTKArgs, Error)
 data Query
   = Keywords String
   | Indices String
+  | Primitives String
 
 keywords :: Parser Query
 keywords = ado
@@ -42,6 +43,16 @@ indices = ado
     , help "indices command"
     ]
   in Indices kanji
+
+primitives :: Parser Query
+primitives = ado
+  prims <- strOption $ fold
+    [ long "primatives"
+    , short 'p'
+    , metavar "COMMAND"
+    , help "primatives command"
+    ]
+  in Primitives prims
 
 -- | A RTK index should be an integer > 0 and < 3001
 isIndex :: String -> Either Error String
@@ -78,7 +89,7 @@ isPrim prim = do
   expression <- regex "[a-z]" $ parseFlags "g" 
   if (test expression prim)
     then Right prim
-    else Left "Primatives must be lower case english strings"
+    else Left "Primitives must be lower case english strings"
 
 
 validate :: Query -> Effect (Either Error RTKArgs)
@@ -88,12 +99,14 @@ validate query = pure $
                        (\xs -> Right {cmd: "-k", args: split (Pattern "") xs})
      Indices k -> (isKanji k) >>= 
                        (\xs -> Right {cmd: "-i", args: split (Pattern "") xs})
+     Primitives p -> (isPrim p) >>= 
+                       (\xs -> Right {cmd: "-p", args: split (Pattern " ") xs})
 
 
 cmdLineParser :: Effect (Either Error RTKArgs)
 cmdLineParser = validate =<< execParser opts
   where
-     opts = info (keywords <|> indices <**> helper)
+     opts = info (keywords <|> indices <|> primitives <**> helper)
       ( fullDesc
      <> progDesc "Print a greeting for TARGET"
      <> header "hello - a test for purescript-optparse" )
