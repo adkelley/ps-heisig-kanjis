@@ -7,8 +7,6 @@ import Options.Applicative ( Parser, execParser, fullDesc, header
                            , short, strOption, (<**>))
 import Control.Alternative ((<|>))
 import Data.Foldable (fold)
-import Data.Traversable (traverse)
-import Data.Array (fromFoldable) as A
 import Effect (Effect)
 import Data.String.Common (split)
 import Data.String.Pattern (Pattern (..)) 
