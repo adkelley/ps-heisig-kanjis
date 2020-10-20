@@ -1,8 +1,9 @@
-module Params (Query (..), isKanji, keywords) where
+module Params (cmdLineParser) where
 
 import Prelude
 
 import Options.Applicative
+import Control.Alternative ((<|>))
 import Data.Foldable (fold)
 import Data.List (List (..), fromFoldable, drop, (:)) 
 import Data.Traversable (traverse)
@@ -20,6 +21,7 @@ import Types (RTKArgs, Error)
 
 data Query
   = Keywords String
+  | Indices String
 
 keywords :: Parser Query
 keywords = ado
@@ -31,11 +33,15 @@ keywords = ado
     ]
   in Keywords kanji
 
-getArgs :: Effect (List String)
-getArgs = do
-  xs <- argv
-  pure $ drop 2 $ fromFoldable xs
-  
+indices :: Parser Query
+indices = ado
+  kanji <- strOption $ fold
+    [ long "indices"
+    , short 'i'
+    , metavar "COMMAND"
+    , help "indices command"
+    ]
+  in Indices kanji
 
 -- | A RTK index should be an integer > 0 and < 3001
 isIndex :: String -> Either Error String
@@ -85,21 +91,23 @@ splitNode (x : _) =
   split (Pattern "") x
 
 
---validate :: Query -> Either Error RTKArgs
---validate query = 
---   case query of
---     Keywords k -> (isKanji k) >>= 
---                       (\xs -> mkArgs "-k " $ split (Pattern "") xs)
---     _ -> Left $ "Usage: node index.js <cmd> <arguments>"
---
---cmdLineParser :: Effect (Either Error RTKArgs)
---cmdLineParser = validate =<< execParser opts
---  where
---    opts = info (keywords <**> helper)
---      ( fullDesc
---     <> progDesc "Print a greeting for TARGET"
---     <> header "hello - a test for purescript-optparse" )
---
+validate :: Query -> Effect (Either Error RTKArgs)
+validate query = pure $
+   case query of
+     Keywords k -> (isKanji k) >>= 
+                       (\xs -> mkArgs "-k" $ split (Pattern "") xs)
+     Indices k -> (isKanji k) >>= 
+                       (\xs -> mkArgs "-i" $ split (Pattern "") xs)
+
+
+cmdLineParser :: Effect (Either Error RTKArgs)
+cmdLineParser = validate =<< execParser opts
+  where
+     opts = info ((keywords <|> indices) <**> helper)
+      ( fullDesc
+     <> progDesc "Print a greeting for TARGET"
+     <> header "hello - a test for purescript-optparse" )
+
 
 --cmdLineParser :: Effect (Either Error RTKArgs)
 --cmdLineParser = do
