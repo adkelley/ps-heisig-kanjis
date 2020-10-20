@@ -2,14 +2,14 @@ module Params (cmdLineParser) where
 
 import Prelude
 
-import Options.Applicative
+import Options.Applicative ( Parser, execParser, fullDesc, header
+                           , help, helper, info, long, metavar, progDesc
+                           , short, strOption, (<**>))
 import Control.Alternative ((<|>))
 import Data.Foldable (fold)
-import Data.List (List (..), fromFoldable, drop, (:)) 
 import Data.Traversable (traverse)
 import Data.Array (fromFoldable) as A
 import Effect (Effect)
-import Node.Process (argv)
 import Data.String.Common (split)
 import Data.String.Pattern (Pattern (..)) 
 import Data.Either (Either (..))
@@ -81,29 +81,19 @@ isPrim prim = do
     else Left "Primatives must be lower case english strings"
 
 
-mkArgs :: String -> Array String -> Either Error RTKArgs
-mkArgs cmd args_ = Right {cmd, args: args_}
-
-
-splitNode :: List String -> Array String
-splitNode (Nil) = [""]
-splitNode (x : _) = 
-  split (Pattern "") x
-
-
 validate :: Query -> Effect (Either Error RTKArgs)
 validate query = pure $
    case query of
      Keywords k -> (isKanji k) >>= 
-                       (\xs -> mkArgs "-k" $ split (Pattern "") xs)
+                       (\xs -> Right {cmd: "-k", args: split (Pattern "") xs})
      Indices k -> (isKanji k) >>= 
-                       (\xs -> mkArgs "-i" $ split (Pattern "") xs)
+                       (\xs -> Right {cmd: "-i", args: split (Pattern "") xs})
 
 
 cmdLineParser :: Effect (Either Error RTKArgs)
 cmdLineParser = validate =<< execParser opts
   where
-     opts = info ((keywords <|> indices) <**> helper)
+     opts = info (keywords <|> indices <**> helper)
       ( fullDesc
      <> progDesc "Print a greeting for TARGET"
      <> header "hello - a test for purescript-optparse" )
