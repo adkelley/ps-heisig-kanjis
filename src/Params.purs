@@ -1,4 +1,4 @@
-module Params (cmdLineParser) where
+module Params (Query (..), isKanji, keywords) where
 
 import Prelude
 
@@ -85,21 +85,21 @@ splitNode (x : _) =
   split (Pattern "") x
 
 
-validate :: Query -> Either Error RTKArgs
-validate query = 
-   case query of
-     Keywords k -> (isKanji k) >>= 
-                       (\xs -> mkArgs "-k " $ split (Pattern "") xs)
-     _ -> Left $ "Usage: node index.js <cmd> <arguments>"
-
-cmdLineParser :: Effect (Either Error RTKArgs)
-cmdLineParser = pure $ validate =<< execParser opts
-  where
-    opts = info (keywords <**> helper)
-      ( fullDesc
-     <> progDesc "Print a greeting for TARGET"
-     <> header "hello - a test for purescript-optparse" )
-
+--validate :: Query -> Either Error RTKArgs
+--validate query = 
+--   case query of
+--     Keywords k -> (isKanji k) >>= 
+--                       (\xs -> mkArgs "-k " $ split (Pattern "") xs)
+--     _ -> Left $ "Usage: node index.js <cmd> <arguments>"
+--
+--cmdLineParser :: Effect (Either Error RTKArgs)
+--cmdLineParser = validate =<< execParser opts
+--  where
+--    opts = info (keywords <**> helper)
+--      ( fullDesc
+--     <> progDesc "Print a greeting for TARGET"
+--     <> header "hello - a test for purescript-optparse" )
+--
 
 --cmdLineParser :: Effect (Either Error RTKArgs)
 --cmdLineParser = do

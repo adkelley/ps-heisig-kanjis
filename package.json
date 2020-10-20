@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "spago bundle-app --main Main --to index.js",
-    "dev": "spago bundle-app --watch --main Main --to index.js --then \"node index.js -i 忠告\"",
+    "dev": "spago bundle-app --watch --main Main --to index.js --then \"node index.js -k 忠告\"",
     "test": "spago test --watch --main Test.Main"
   },
   "keywords": [],
