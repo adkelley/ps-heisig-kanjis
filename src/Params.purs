@@ -10,6 +10,7 @@ import Data.Maybe (fromMaybe)
 import Data.String.Common (split)
 import Data.String.Pattern (Pattern(..))
 import Data.String.Regex (regex, test, parseFlags)
+import Data.Traversable (traverse)
 import Effect (Effect)
 import Options.Applicative (Parser, execParser, fullDesc, header, help, helper, info, long, metavar, progDesc, short, strOption, (<**>))
 import Types (RTKArgs, Error)
@@ -25,8 +26,8 @@ keywords = ado
   kanji <- strOption $ fold
     [ long "keywords"
     , short 'k'
-    , metavar "COMMAND"
-    , help "keywords command"
+    , metavar "QUERY"
+    , help "Query for keywords command"
     ]
   in Keywords kanji
 
@@ -35,8 +36,8 @@ indices = ado
   kanji <- strOption $ fold
     [ long "indices"
     , short 'i'
-    , metavar "COMMAND"
-    , help "indices command"
+    , metavar "QUERY"
+    , help "Query for indices command"
     ]
   in Indices kanji
 
@@ -44,10 +45,10 @@ indices = ado
 primitives :: Parser Query
 primitives = ado
   prims <- strOption $ fold
-    [ long "primatives"
+    [ long "primitives"
     , short 'p'
-    , metavar "COMMAND"
-    , help "primatives command"
+    , metavar "QUERY"
+    , help "Query for primitives command"
     ]
   in Primitives prims
 
@@ -57,19 +58,22 @@ frames = ado
   indices <- strOption $ fold
     [ long "frames"
     , short 'f'
-    , metavar "COMMAND"
-    , help "frames command"
+    , metavar "QUERY"
+    , help "Query for frames command"
     ]
   in Frames indices
 
 
 -- | A RTK index should be an integer > 0 and < 3001
-isIndex :: String -> Either Error String
-isIndex index = do
-  let i = fromMaybe 0 $ parseInt index $ toRadix 10 
-  if (i > 0 && i < 3001)
-    then Right index
-    else Left "RTK indices must be integers > 0 and < 3001"
+isIndices :: String -> Either Error (Array String)
+isIndices ixs = 
+  traverse (\i -> isIndex i) $ split (Pattern " ") ixs
+  where
+    isIndex index = do
+      let i = fromMaybe 0 $ parseInt index $ toRadix 10 
+      if (i > 0 && i < 3001)
+        then Right index
+        else Left "RTK indices must be integers > 0 and < 3001"
 
 
 -- UNICODE RANGE : DESCRIPTION
@@ -84,34 +88,40 @@ isIndex index = do
 -- 2605-2606 : Stars
 -- 2190-2195 : Arrows
 -- u203B     : Weird asterisk thing
-isKanji :: String -> Either Error String
-isKanji kanji = do 
-  expression <- regex "[\\u4E00-\\u9FAF]" $ parseFlags "g" 
-  if (test expression kanji)
-    then Right kanji
-    else Left "A jukugo must be a kanji or kanji compound"
+isJukugo :: String -> Either Error (Array String)
+isJukugo jukugo = 
+  traverse (\k -> isKanji k) $ split (Pattern "") jukugo
+  where
+    isKanji kanji = do
+      expression <- regex "[\\u4E00-\\u9FAF]" $ parseFlags "g" 
+      if (test expression kanji)
+        then Right kanji
+        else Left "A jukugo must be a kanji character or kanji compound"
 
 
 -- | A primitive must be lower case english string
-isPrim :: String -> Either Error String
-isPrim prim = do
-  expression <- regex "[a-z]" $ parseFlags "g" 
-  if (test expression prim)
-    then Right prim
-    else Left "Primitives must be lower case english strings"
+arePrimitives :: String -> Either Error (Array String)
+arePrimitives prims = 
+  traverse (\p -> isPrimitive p) $ split (Pattern " ") prims
+  where 
+    isPrimitive p = do
+      expression <- regex "[a-z]" $ parseFlags "g" 
+      if (test expression p)
+        then Right p
+        else Left "Primitives must be lower case english strings"
 
 
 validate :: Query -> Effect (Either Error RTKArgs)
 validate query = pure $
    case query of
-     Keywords k -> (isKanji k) >>= 
-                       (\xs -> Right {cmd: "-k", args: split (Pattern "") xs})
-     Indices i -> (isKanji i) >>= 
-                       (\xs -> Right {cmd: "-i", args: split (Pattern "") xs})
-     Primitives p -> (isPrim p) >>= 
-                       (\xs -> Right {cmd: "-p", args: split (Pattern " ") xs})
-     Frames f -> (isIndex f) >>= 
-                       (\xs -> Right {cmd: "-f", args: split (Pattern " ") xs})
+     Keywords k -> (isJukugo k) >>= 
+                       (\xs -> Right {cmd: "-k", args: xs})
+     Indices i -> (isJukugo i) >>= 
+                       (\xs -> Right {cmd: "-i", args: xs})
+     Primitives p -> (arePrimitives p) >>= 
+                       (\xs -> Right {cmd: "-p", args: xs})
+     Frames f -> (isIndices f) >>= 
+                       (\xs -> Right {cmd: "-f", args: xs})
 
 cmdLineParser :: Effect (Either Error RTKArgs)
 cmdLineParser = validate =<< execParser opts
@@ -119,22 +129,5 @@ cmdLineParser = validate =<< execParser opts
      opts = info (keywords <|> indices <|> primitives <|> 
                   frames <**> helper)
       ( fullDesc
-     <> progDesc "Print a greeting for TARGET"
-     <> header "hello - a test for purescript-optparse" )
-
-
---cmdLineParser :: Effect (Either Error RTKArgs)
---cmdLineParser = do
---  args <- getArgs
---  pure $ case args of
---    "-p" : rest -> (traverse isPrim rest) >>=
---                     (\xs -> mkArgs "-p" $ A.fromFoldable xs)
---    "-k" : rest -> (traverse isKanji rest) >>=
---                       (\xs -> mkArgs "-k" $ splitNode xs)
---    "-i" : rest -> (traverse isKanji rest) >>= 
---                     (\xs -> mkArgs "-i" $ splitNode xs) 
---    "-f" : rest -> (traverse isIndex rest) >>= 
---                      (\xs -> mkArgs "-f" $ A.fromFoldable xs) 
---    Nil -> Left $ "Usage: node index.js <cmd> <arguments>"
---    _ -> Left $ "Usage: node index.js <cmd> <arguments>"
-
+     <> progDesc "return the result of a QUERY"
+     <> header "rtk - query utilities for the rtk google spreadsheet" )
