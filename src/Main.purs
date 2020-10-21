@@ -33,13 +33,15 @@ main :: Effect Unit
 --main = launchAff_ do
 main = do
  query <- cmdLineParser
- either (\e -> launchAff_ $ paste $ "Error: " <> e) (\args -> launchAff_ $ doWork args) query
+ launchAff_ $ either (\e -> paste $ "Error: " <> e) (\args -> doWork args) query
   where
+    -- | copy and paste to mac clipboard
     paste :: String -> Aff Unit
     paste result = do
        pbcopy result
        pbpaste 
 
+    -- | retreive spreadsheet columns and perform query
     doWork :: RTKArgs -> Aff Unit
     doWork args =
        either (\googErr -> paste $ show googErr) 
