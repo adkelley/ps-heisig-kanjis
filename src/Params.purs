@@ -129,5 +129,5 @@ cmdLineParser = validate =<< execParser opts
      opts = info (keywords <|> indices <|> primitives <|> 
                   frames <**> helper)
       ( fullDesc
-     <> progDesc "return the result of a QUERY"
+     <> progDesc "return the result of an RTK QUERY"
      <> header "rtk - query utilities for the rtk google spreadsheet" )
