@@ -2,25 +2,23 @@ module Params (cmdLineParser) where
 
 import Prelude
 
-import Options.Applicative ( Parser, execParser, fullDesc, header
-                           , help, helper, info, long, metavar, progDesc
-                           , short, strOption, (<**>))
 import Control.Alternative ((<|>))
+import Data.Either (Either(..))
 import Data.Foldable (fold)
-import Effect (Effect)
-import Data.String.Common (split)
-import Data.String.Pattern (Pattern (..)) 
-import Data.Either (Either (..))
-import Data.Maybe (fromMaybe)
 import Data.Int.Parse (parseInt, toRadix)
+import Data.Maybe (fromMaybe)
+import Data.String.Common (split)
+import Data.String.Pattern (Pattern(..))
 import Data.String.Regex (regex, test, parseFlags)
-
+import Effect (Effect)
+import Options.Applicative (Parser, execParser, fullDesc, header, help, helper, info, long, metavar, progDesc, short, strOption, (<**>))
 import Types (RTKArgs, Error)
 
 data Query
   = Keywords String
   | Indices String
   | Primitives String
+  | Frames String
 
 keywords :: Parser Query
 keywords = ado
@@ -42,6 +40,7 @@ indices = ado
     ]
   in Indices kanji
 
+
 primitives :: Parser Query
 primitives = ado
   prims <- strOption $ fold
@@ -51,6 +50,18 @@ primitives = ado
     , help "primatives command"
     ]
   in Primitives prims
+
+
+frames :: Parser Query
+frames = ado
+  indices <- strOption $ fold
+    [ long "frames"
+    , short 'f'
+    , metavar "COMMAND"
+    , help "frames command"
+    ]
+  in Frames indices
+
 
 -- | A RTK index should be an integer > 0 and < 3001
 isIndex :: String -> Either Error String
@@ -95,16 +106,18 @@ validate query = pure $
    case query of
      Keywords k -> (isKanji k) >>= 
                        (\xs -> Right {cmd: "-k", args: split (Pattern "") xs})
-     Indices k -> (isKanji k) >>= 
+     Indices i -> (isKanji i) >>= 
                        (\xs -> Right {cmd: "-i", args: split (Pattern "") xs})
      Primitives p -> (isPrim p) >>= 
                        (\xs -> Right {cmd: "-p", args: split (Pattern " ") xs})
-
+     Frames f -> (isIndex f) >>= 
+                       (\xs -> Right {cmd: "-f", args: split (Pattern " ") xs})
 
 cmdLineParser :: Effect (Either Error RTKArgs)
 cmdLineParser = validate =<< execParser opts
   where
-     opts = info (keywords <|> indices <|> primitives <**> helper)
+     opts = info (keywords <|> indices <|> primitives <|> 
+                  frames <**> helper)
       ( fullDesc
      <> progDesc "Print a greeting for TARGET"
      <> header "hello - a test for purescript-optparse" )
