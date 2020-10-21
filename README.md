@@ -8,13 +8,13 @@
 - 20201018 Finished error handling, began optparse migration by implementing tutorial
 - 20201019 Continued working on optparse migration 
 - 20201020 WIP: optparse migration.  Breakthrough! Limited the scope of the launchAff to just the functions that are performed in the AFF context was a good solution. 
-- 20201021 Finished optparse migration; limited scope of launchAff_ 
+- 20201021 Finished optparse migration; limited scope of launchAff_ ; concluded there's no advantage storing the JWT
 
 ## TODOS:
 - [x] Finish error handling in google functions
 - [x] Determine if I can further limit the scope of the AFF context
 - [x] Migrate Params.purs to [purescript-optparse](https://pursuit.purescript.org/packages/purescript-optparse/3.0.0)
-- [ ] Store token and check it's validity
+- [x] Store token and check it's validity
 
 ## REFERENCES
 [Google Sheets

@@ -1,7 +1,5 @@
 "use strict";
 
-const {google} = require ('googleapis');
-
 // type JWT =
 //   { access_token :: String
 //   , token_type :: String
