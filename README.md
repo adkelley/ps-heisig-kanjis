@@ -16,6 +16,12 @@
 - [x] Migrate Params.purs to [purescript-optparse](https://pursuit.purescript.org/packages/purescript-optparse/3.0.0)
 - [x] Store token and check it's validity
 
+## INSTALLATION:
+Sticking to psc 0.13.8 until optparse migrates to 0.14.0 package set.  Once that's done then modify `package.json` to bump to psc `^0.13.8`.
+
+`$ npm i`
+`$ npm run build`
+
 ## REFERENCES
 [Google Sheets
 API](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/batchGet)
