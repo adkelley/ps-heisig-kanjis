@@ -30,7 +30,6 @@ work {cmd, args} rtk =
 
 
 main :: Effect Unit
---main = launchAff_ do
 main = do
  query <- cmdLineParser
  launchAff_ $ either (\e -> paste $ "Error: " <> e) (\args -> doWork args) query
