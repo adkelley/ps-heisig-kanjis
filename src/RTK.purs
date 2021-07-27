@@ -54,6 +54,7 @@ indicesToFrames query indices kanji = do
 -- | Given an collection of RTK primitives return the RTK frames for all
 -- | kanji containings these primitives, otherwise return the error 
 -- | message parameter
+-- | Primaitives are separated by ';'
 primsToFrames 
   :: Array String 
   -> Array String 

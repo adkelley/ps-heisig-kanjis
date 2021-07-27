@@ -6,9 +6,9 @@ import Data.Either (Either(..), either)
 import Effect (Effect)
 import Effect.Aff (Aff, attempt, launchAff_)
 import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
+import Effect.Class.Console (log)
 import Google.Auth (Client, auth)
 import Google.JWT (jwt)
-import OSX.Utils (pbcopy, pbpaste)
 import Params (cmdLineParser)
 import RTK (indicesToFrames, kanjiToIndices, kanjiToKeywords, primsToFrames)
 import Types (RTKData, RTKArgs)
@@ -32,18 +32,16 @@ work {cmd, args} rtk =
 main :: Effect Unit
 main = do
  query <- cmdLineParser
- launchAff_ $ either (\e -> paste $ "Error: " <> e) (\args -> doWork args) query
+ launchAff_ $ either (\e -> print $ "Error: " <> e) (\args -> doWork args) query
   where
-    -- | copy and paste to mac clipboard
-    paste :: String -> Aff Unit
-    paste result = do
-       pbcopy result
-       pbpaste 
+    -- | print to output
+    print :: String -> Aff Unit
+    print result = log result
 
     -- | retreive spreadsheet columns and perform query
     doWork :: RTKArgs -> Aff Unit
     doWork args =
-       either (\googErr -> paste $ show googErr) 
-              (\rtk -> paste $ 
+       either (\googErr -> print $ show googErr) 
+              (\rtk -> print $ 
                  either identity identity (work args rtk)) 
                =<< (attempt $ gsRun =<< auth =<< jwt)

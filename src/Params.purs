@@ -65,9 +65,10 @@ frames = ado
 
 
 -- | A RTK index should be an integer > 0 and < 3001
+-- | Indices are seprated by ';'
 isIndices :: String -> Either Error (Array String)
 isIndices ixs = 
-  traverse (\i -> isIndex i) $ split (Pattern " ") ixs
+  traverse (\i -> isIndex i) $ split (Pattern ";") ixs
   where
     isIndex index = do
       let i = fromMaybe 0 $ parseInt index $ toRadix 10 
