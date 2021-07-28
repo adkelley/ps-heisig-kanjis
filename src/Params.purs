@@ -20,6 +20,7 @@ data Query
   | Indices String
   | Primitives String
   | Frames String
+  | Update String
 
 keywords :: Parser Query
 keywords = ado
@@ -62,6 +63,17 @@ frames = ado
     , help "Query for frames command"
     ]
   in Frames indices
+
+
+update :: Parser Query
+update = ado
+  indices <- strOption $ fold
+    [ long "update"
+    , short 'w'
+    , metavar "QUERY"
+    , help "Query for update command"
+    ]
+  in Update indices
 
 
 -- | A RTK index should be an integer > 0 and < 3001
@@ -111,6 +123,16 @@ arePrimitives prims =
         then Right p
         else Left "Primitives must be lower case english strings"
 
+-- | A primitive must be lower case english string
+areComponents :: String -> Either Error (Array String)
+areComponents prims = 
+  traverse (\p -> isPrimitive p) $ split (Pattern " ") prims
+  where 
+    isPrimitive p = do
+      expression <- regex "[0-9, a-z]" $ parseFlags "g" 
+      if (test expression p)
+        then Right p
+        else Left "Argument must have an index and primitives"
 
 validate :: Query -> Effect (Either Error RTKArgs)
 validate query = pure $
@@ -123,12 +145,14 @@ validate query = pure $
                        (\xs -> Right {cmd: "-p", args: xs})
      Frames f -> (isIndices f) >>= 
                        (\xs -> Right {cmd: "-f", args: xs})
+     Update w -> (areComponents w) >>= 
+                       (\xs -> Right {cmd: "-w", args: xs})
 
 cmdLineParser :: Effect (Either Error RTKArgs)
 cmdLineParser = validate =<< execParser opts
   where
      opts = info (keywords <|> indices <|> primitives <|> 
-                  frames <**> helper)
+                  frames <|> update <**> helper)
       ( fullDesc
      <> progDesc "return the result of an RTK QUERY"
      <> header "rtk - query utilities for the rtk google spreadsheet" )

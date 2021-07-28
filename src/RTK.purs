@@ -1,18 +1,16 @@
 module RTK ( kanjiToKeywords, primsToFrames
-           , kanjiToIndices, indicesToFrames) where
+           , kanjiToIndices, indicesToFrames
+           , updateComponents) where
 
 import Prelude
 
-import Data.Array (elemIndex, index, intercalate, uncons
-                  , zipWith, intersect, difference
-                  , head, tail
-                  )
-import Data.Either (Either (..), note)
-import Data.Maybe (Maybe (..), fromMaybe)
-import Data.String (Pattern (..), split, trim)
+import Data.Array (difference, elemIndex, head, index, intercalate, intersect, tail, uncons, zipWith, (!!))
+import Data.Either (Either(..), note)
+import Data.Int.Parse (parseInt, toRadix)
+import Data.Maybe (Maybe(..), fromMaybe)
+import Data.String (Pattern(..), split, trim)
 import Data.Traversable (traverse)
-
-import Types (Kanji, Keywords, Query, Error, Indices)
+import Types (Kanji, Keywords, Query, Error, Indices, Components)
 
 -- TODO: Can this be a newtype?
 type Separator = String
@@ -56,9 +54,9 @@ indicesToFrames query indices kanji = do
 -- | message parameter
 -- | Primaitives are separated by ';'
 primsToFrames 
-  :: Array String 
-  -> Array String 
-  -> Array String 
+  :: Query
+  -> Components
+  -> Kanji
   -> Either Error String
 primsToFrames ps cs ks = Right $ go cs ks 1 ""
   where
@@ -79,3 +77,19 @@ primsToFrames ps cs ks = Right $ go cs ks 1 ""
           in
             go tcs tks (i+1) (result <> s)
         Nothing -> "" -- we never reach here
+
+updateComponents
+  :: Query
+  -> Components
+  -> Either Error String
+updateComponents q cs =
+  let
+    radix10 = toRadix 10
+    mbComponent = head q >>=
+                   \index_ -> parseInt index_ radix10 >>=
+                   \index -> cs !! (index - 1)
+    primitives = fromMaybe "" $ q !! 1
+    in
+     case mbComponent of
+       Just component -> Right primitives
+       Nothing -> Right "error"

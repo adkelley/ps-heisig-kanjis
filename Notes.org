@@ -1,0 +1,4 @@
+* Rearchitect flow
+  - What if the gsapiBatchGet occurred within RTK.purs? This way all the CRUD occurs in one spot. This might simplify Main.purs
+* Todos
+  - Refactor areComponents to reflect that there are two arguments, one is the index and the other is the primitives.
