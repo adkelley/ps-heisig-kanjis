@@ -24,15 +24,25 @@ gsBatchGet client = fromEffectFnAff $ _gsBatchGet client
 gsUpdate :: Client -> Array String -> Aff RTKData
 gsUpdate client components = fromEffectFnAff $ _gsUpdate client components
 
-work :: RTKArgs -> RTKData -> Either String String
+work :: RTKArgs -> RTKData -> Aff (Either String String)
 work {cmd, args} rtk =
   case cmd of
-    "-p" -> primsToFrames args rtk.components rtk.kanji
-    "-f" -> indicesToFrames args rtk.indices rtk.kanji
-    "-k" -> kanjiToKeywords args rtk.kanji rtk.keywords
-    "-i" -> kanjiToIndices args rtk.kanji rtk.indices
-    "-w" -> updateComponents args rtk.components
-    _ -> Left "Something went wrong!"
+    "-p" -> pure $ primsToFrames args rtk.components rtk.kanji
+    "-f" -> pure $ indicesToFrames args rtk.indices rtk.kanji
+    "-k" -> pure $ kanjiToKeywords args rtk.kanji rtk.keywords
+    "-i" -> pure $ kanjiToIndices args rtk.kanji rtk.indices
+    "-w" -> pure $ updateComponents args rtk.components
+    _ -> pure $ Left "Something went wrong!"
+
+--work :: RTKArgs -> RTKData -> Either String String
+--work {cmd, args} rtk =
+--  case cmd of
+--    "-p" -> primsToFrames args rtk.components rtk.kanji
+--    "-f" -> indicesToFrames args rtk.indices rtk.kanji
+--    "-k" -> kanjiToKeywords args rtk.kanji rtk.keywords
+--    "-i" -> kanjiToIndices args rtk.kanji rtk.indices
+--    "-w" -> updateComponents args rtk.components
+--    _ -> Left "Something went wrong!"
 
 
 batchGet :: Aff (Either Error RTKData)
@@ -47,7 +57,9 @@ main = do
     -- | retreive spreadsheet columns and perform query
     doWork :: RTKArgs -> Aff Unit
     doWork args =
-       either (\googErr -> logShow googErr) 
-              (\rtk -> log $ 
-                 either identity identity (work args rtk)) 
-               =<< batchGet
+      batchGet >>=
+      either
+        (\googErr -> logShow googErr)
+        \rtk -> work args rtk >>= \x -> either log log x
+----        \rtk -> (work args rtk) #
+--            either log log 

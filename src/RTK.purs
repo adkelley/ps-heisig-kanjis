@@ -85,11 +85,13 @@ updateComponents
 updateComponents q cs =
   let
     radix10 = toRadix 10
-    mbComponent = head q >>=
-                   \index_ -> parseInt index_ radix10 >>=
-                   \index -> cs !! (index - 1)
+    index = head q >>=
+            (\i -> parseInt i radix10) #
+            liftA1 (\x -> x - 1) #
+            fromMaybe (-1) 
+    mbComponent = cs !! index
     primitives = fromMaybe "" $ q !! 1
     in
      case mbComponent of
-       Just component -> Right primitives
+       Just component -> Right component
        Nothing -> Right "error"
