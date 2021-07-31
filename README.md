@@ -20,7 +20,7 @@ $ node index.js -i 中学
 ```
 Given a primitive(s), return the kanji containing the primative(s)
 ```
-$ node index.js -p 中
+$ node index.js -p middle
 # 忠[35] 沖[36] 仲[37] 串[623] 遣[1590] 潰[1636] 患[1755] 遺[1806] 貴[1850] 虫[2069]
 
 ```

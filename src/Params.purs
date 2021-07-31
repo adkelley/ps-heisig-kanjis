@@ -87,7 +87,7 @@ isIndices is =
       let i = fromMaybe 0 $ parseInt index $ toRadix 10 
       if (i > 0 && i < 3001)
         then Right index
-        else Left "RTK indices must be integers > 0 and < 3001"
+        else Left "RTK indices must be integers > 0 and < 3001\n"
 
 
 -- UNICODE RANGE : DESCRIPTION
@@ -110,7 +110,7 @@ isJukugo jukugo =
       expression <- regex "[\\u4E00-\\u9FAF]" $ parseFlags "g" 
       if (test expression kanji)
         then Right jukugo
-        else Left "A jukugo must be a kanji character or kanji compound"
+        else Left "A jukugo must be a kanji character or kanji compound\n"
 
 
 -- | A primitive must be lower case english string
@@ -122,7 +122,7 @@ arePrimitives prims =
       expression <- regex "[a-z]" $ parseFlags "g" 
       if (test expression p)
         then Right p
-        else Left "Primitives must be lower case english strings"
+        else Left "Primitives must be lower case english strings\n"
 
 -- | Valididate that arguements contain a valid index and primitives 
 isIndexPrim :: String -> Either Error (Array String)
@@ -142,10 +142,10 @@ isIndexPrim q =
         expression <- regex "[a-z/. ]" $ parseFlags "g" 
         if (test expression p)
           then Right indexPrim
-          else Left "Argument must have an index and primitives"
+          else Left "Argument must have an index and primitives\n"
         where
           p = fromMaybe "" $ indexPrim !! 1
-     Nothing -> Left "Invalid index"
+     Nothing -> Left "Invalid index\n"
 
 validate :: Query -> Effect (Either Error RTKArgs)
 validate query = pure $

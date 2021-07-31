@@ -60,4 +60,4 @@ main = do
       batchGet >>=
       either
         (\googErr -> logShow googErr)
-        \rtk -> work args rtk >>= \x -> either log log x
+        \rtk -> work args rtk >>=  \x -> either log log x
