@@ -3,17 +3,18 @@ module Params (cmdLineParser) where
 import Prelude
 
 import Control.Alternative ((<|>))
+import Data.Array (head, (!!))
 import Data.Either (Either(..))
 import Data.Foldable (fold)
 import Data.Int.Parse (parseInt, toRadix)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String.Common (split)
 import Data.String.Pattern (Pattern(..))
 import Data.String.Regex (regex, test, parseFlags)
 import Data.Traversable (traverse)
 import Effect (Effect)
 import Options.Applicative (Parser, execParser, fullDesc, header, help, helper, info, long, metavar, progDesc, short, strOption, (<**>))
-import Types (RTKArgs, Error)
+import Types (Error, RTKArgs)
 
 data Query
   = Keywords String
@@ -77,10 +78,10 @@ update = ado
 
 
 -- | A RTK index should be an integer > 0 and < 3001
--- | Indices are seprated by ';'
+-- | Indices are separated by spaces
 isIndices :: String -> Either Error (Array String)
-isIndices ixs = 
-  traverse (\i -> isIndex i) $ split (Pattern ";") ixs
+isIndices is = 
+  traverse (\i -> isIndex i) $ split (Pattern " ") is
   where
     isIndex index = do
       let i = fromMaybe 0 $ parseInt index $ toRadix 10 
@@ -108,7 +109,7 @@ isJukugo jukugo =
     isKanji kanji = do
       expression <- regex "[\\u4E00-\\u9FAF]" $ parseFlags "g" 
       if (test expression kanji)
-        then Right kanji
+        then Right jukugo
         else Left "A jukugo must be a kanji character or kanji compound"
 
 
@@ -123,30 +124,42 @@ arePrimitives prims =
         then Right p
         else Left "Primitives must be lower case english strings"
 
--- | A primitive must be lower case english string
-areComponents :: String -> Either Error (Array String)
-areComponents prims = 
-  traverse (\p -> isPrimitive p) $ split (Pattern " ") prims
-  where 
-    isPrimitive p = do
-      expression <- regex "[0-9, a-z]" $ parseFlags "g" 
-      if (test expression p)
-        then Right p
-        else Left "Argument must have an index and primitives"
+-- | Valididate that arguements contain a valid index and primitives 
+isIndexPrim :: String -> Either Error (Array String)
+isIndexPrim q = 
+  let 
+    indexPrim = split (Pattern " ") q
+    radix10 = toRadix 10
+    mbIndex = head indexPrim >>=
+              (\i -> parseInt i radix10) #
+              liftA1 (\x -> x - 1) >>=
+              \i -> if (i >= 0)
+                       then Just i
+                       else Nothing
+  in 
+   case mbIndex of
+     Just index -> do
+        expression <- regex "[a-z/. ]" $ parseFlags "g" 
+        if (test expression p)
+          then Right indexPrim
+          else Left "Argument must have an index and primitives"
+        where
+          p = fromMaybe "" $ indexPrim !! 1
+     Nothing -> Left "Invalid index"
 
 validate :: Query -> Effect (Either Error RTKArgs)
 validate query = pure $
    case query of
      Keywords k -> (isJukugo k) >>= 
-                       (\xs -> Right {cmd: "-k", args: xs})
+                       (\args -> Right {cmd: "-k", args: args})
      Indices i -> (isJukugo i) >>= 
-                       (\xs -> Right {cmd: "-i", args: xs})
+                       (\args -> Right {cmd: "-i", args: args})
      Primitives p -> (arePrimitives p) >>= 
-                       (\xs -> Right {cmd: "-p", args: xs})
+                       (\args -> Right {cmd: "-p", args: args})
      Frames f -> (isIndices f) >>= 
-                       (\xs -> Right {cmd: "-f", args: xs})
-     Update w -> (areComponents w) >>= 
-                       (\xs -> Right {cmd: "-w", args: xs})
+                       (\args -> Right {cmd: "-f", args: args})
+     Update w -> (isIndexPrim w) >>= 
+                       (\args -> Right {cmd: "-w", args: args})
 
 cmdLineParser :: Effect (Either Error RTKArgs)
 cmdLineParser = validate =<< execParser opts

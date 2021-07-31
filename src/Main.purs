@@ -61,5 +61,3 @@ main = do
       either
         (\googErr -> logShow googErr)
         \rtk -> work args rtk >>= \x -> either log log x
-----        \rtk -> (work args rtk) #
---            either log log 

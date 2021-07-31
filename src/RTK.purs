@@ -10,12 +10,17 @@ import Data.Int.Parse (parseInt, toRadix)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String (Pattern(..), split, trim)
 import Data.Traversable (traverse)
-import Types (Kanji, Keywords, Query, Error, Indices, Components)
+import Types (Error)
 
 -- TODO: Can this be a newtype?
 type Separator = String
 type Keys = Array String
 type Values = Array String
+type Kanji = Array String
+type Keywords = Array String
+type Query = Array String
+type Indices = Array String
+type Components = Array String
 
 search_rtk 
   :: Array String 
