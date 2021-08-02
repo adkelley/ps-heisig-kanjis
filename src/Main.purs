@@ -2,62 +2,46 @@ module Main (main) where
 
 import Prelude
 
+import CmdLineParser (cmdLineParser)
+import Crud (authenticate, batchGet)
 import Data.Either (Either(..), either)
 import Effect (Effect)
-import Effect.Aff (Aff, attempt, launchAff_)
-import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class.Console (log, logShow)
-import Effect.Exception (Error)
-import Google.Auth (Client, auth)
-import Google.JWT (jwt)
-import Params (cmdLineParser)
 import RTK (indicesToFrames, kanjiToIndices, kanjiToKeywords, primsToFrames, updateComponents)
-import Types (RTKArgs, RTKData)
+import Types (Command(..), RTKData, CmdArgs, Error)
+import ValidateArgs (isIndexPrim, isIndices, isJukugo, isPrimitives)
 
-foreign import _gsBatchGet :: Client -> EffectFnAff RTKData
-foreign import _gsUpdate :: Client -> Array String -> EffectFnAff RTKData
-
-
-gsBatchGet :: Client -> Aff RTKData
-gsBatchGet client = fromEffectFnAff $ _gsBatchGet client
-
-gsUpdate :: Client -> Array String -> Aff RTKData
-gsUpdate client components = fromEffectFnAff $ _gsUpdate client components
-
-work :: RTKArgs -> RTKData -> Aff (Either String String)
-work {cmd, args} rtk =
+work :: CmdArgs -> RTKData -> Aff (Either String String)
+work {cmd, args} rtk = pure $
   case cmd of
-    "-p" -> pure $ primsToFrames args rtk.components rtk.kanji
-    "-f" -> pure $ indicesToFrames args rtk.indices rtk.kanji
-    "-k" -> pure $ kanjiToKeywords args rtk.kanji rtk.keywords
-    "-i" -> pure $ kanjiToIndices args rtk.kanji rtk.indices
-    "-w" -> pure $ updateComponents args rtk.components
-    _ -> pure $ Left "Something went wrong!"
+    P2F -> primsToFrames args rtk.components rtk.kanji
+    I2F -> indicesToFrames args rtk.indices rtk.kanji
+    K2K -> kanjiToKeywords args rtk.kanji rtk.keywords
+    K2I -> kanjiToIndices args rtk.kanji rtk.indices
+    UC -> updateComponents args rtk.components
+  
 
---work :: RTKArgs -> RTKData -> Either String String
---work {cmd, args} rtk =
---  case cmd of
---    "-p" -> primsToFrames args rtk.components rtk.kanji
---    "-f" -> indicesToFrames args rtk.indices rtk.kanji
---    "-k" -> kanjiToKeywords args rtk.kanji rtk.keywords
---    "-i" -> kanjiToIndices args rtk.kanji rtk.indices
---    "-w" -> updateComponents args rtk.components
---    _ -> Left "Something went wrong!"
+validateArgs :: CmdArgs -> Either Error CmdArgs
+validateArgs {cmd, args} = 
+  case cmd of
+    P2F -> isPrimitives {cmd, args}
+    I2F -> isIndices {cmd, args}
+    K2K -> isJukugo {cmd, args}
+    K2I -> isJukugo {cmd, args}
+    UC  -> isIndexPrim {cmd, args}
 
-
-batchGet :: Aff (Either Error RTKData)
-batchGet =
-  attempt $ gsBatchGet =<< auth =<< jwt
 
 main :: Effect Unit
 main = do
- query <- cmdLineParser
- launchAff_ $ either (\e -> log $ "Error: " <> e) (\args -> doWork args) query
+  query <- cmdLineParser
+  launchAff_ $ either log doWork query
   where
     -- | retreive spreadsheet columns and perform query
-    doWork :: RTKArgs -> Aff Unit
-    doWork args =
-      batchGet >>=
-      either
-        (\googErr -> logShow googErr)
-        \rtk -> work args rtk >>=  \x -> either log log x
+    doWork :: CmdArgs -> Aff Unit
+    doWork cmdArgs =
+      case (validateArgs cmdArgs) of
+        Right _ -> authenticate >>=
+                  batchGet >>=
+                  either logShow \rtk -> work cmdArgs rtk >>= either log log
+        Left e -> log e
