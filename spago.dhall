@@ -17,6 +17,7 @@ You can edit this file as you like.
   , "psci-support"
   , "strings"
   , "test-unit"
+  , "unsafe-coerce"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]

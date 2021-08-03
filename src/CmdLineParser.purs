@@ -3,13 +3,12 @@ module CmdLineParser (cmdLineParser) where
 import Prelude
 
 import Control.Alternative ((<|>))
-import Data.Either (Either(..))
 import Data.Foldable (fold)
 import Data.String.Common (split)
 import Data.String.Pattern (Pattern(..))
 import Effect (Effect)
 import Options.Applicative (Parser, execParser, fullDesc, header, help, helper, info, long, metavar, progDesc, short, strOption, (<**>))
-import Types (Error, CmdArgs, Command(..))
+import Types (CmdArgs, Command(..))
 
 data Query
   = Keywords String
@@ -71,16 +70,16 @@ update = ado
     ]
   in Update indices
 
-control :: Query -> Effect (Either Error CmdArgs)
+control :: Query -> Effect CmdArgs
 control query =  pure $
    case query of
-     Keywords k -> Right {cmd: K2K, args: split (Pattern "") k}
-     Indices i -> Right {cmd: K2I, args: split (Pattern "") i}
-     Primitives p -> Right {cmd: P2F, args: split (Pattern ";") p}
-     Frames f -> Right {cmd: I2F, args: split (Pattern ";") f}
-     Update w -> Right {cmd: UC, args: split (Pattern ";") w}
+     Keywords k -> {cmd: K2K, args: split (Pattern "") k}
+     Indices i -> {cmd: K2I, args: split (Pattern "") i}
+     Primitives p -> {cmd: P2F, args: split (Pattern ";") p}
+     Frames f -> {cmd: I2F, args: split (Pattern ";") f}
+     Update w -> {cmd: UC, args: split (Pattern ";") w}
 
-cmdLineParser :: Effect (Either Error CmdArgs)
+cmdLineParser :: Effect CmdArgs
 cmdLineParser = control =<< execParser opts
   where
      opts = info (keywords <|> indices <|> primitives <|> 

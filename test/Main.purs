@@ -5,7 +5,7 @@ import Prelude
 import Effect (Effect)
 import Data.Either (Either (..))
 import Test.Unit (suite, test)
-import Test.Unit.Assert as Assert
+import Test.Unit.Assert (assert)
 import Test.Unit.Main (runTest)
 
 import RTK ( indicesToFrames, primsToFrames
@@ -21,18 +21,17 @@ main :: Effect Unit
 main = runTest do
   suite "green" do
     test "good arguments" do
-      Assert.assert "kanjiToIndices returns indices" $ 
+      assert "kanjiToIndices returns indices" $ 
         Right "1, 2" == kanjiToIndices ["A", "B"] ["A", "B"] ["1", "2"]
-      Assert.assert  "kanjiToKeywords return keywords" $
+      assert  "kanjiToKeywords return keywords" $
         Right "A, B" == kanjiToKeywords ["1", "2"] ["1", "2"] ["A", "B"]
-      Assert.assert "frames returns string" $
+      assert "frames returns string" $
         Right "A[1] B[2]" == indicesToFrames ["1", "2"] ["1", "2"] ["A", "B"]
-      Assert.assert "prims returns string" $
+      assert "prims returns string" $
         Right "A[1] B[2]" == primsToFrames ["A", "B"] ["A;   B", "A; B; C"] ["A", "B"] 
-
   suite "red" do
     test "bad arguments" do
-      Assert.assert "kanjiToKeywords: invalid args should return error message" $ 
+      assert "kanjiToKeywords: invalid args should return error message" $ 
         Left "kanjiToKeywords error" == kanjiToKeywords ["?"] ["A", "B"] ["1", "2"]
-      Assert.assert "indicesToFrames: frames should return error message" $
+      assert "indicesToFrames: frames should return error message" $
         Left "indicesToFrames error" == indicesToFrames ["xx"] ["1", "2"] ["A", "B"]

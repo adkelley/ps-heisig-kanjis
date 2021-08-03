@@ -8,22 +8,21 @@ import Data.Int.Parse (parseInt, toRadix)
 import Data.Maybe (fromMaybe)
 import Data.String.Regex (regex, test, parseFlags)
 import Data.Traversable (traverse)
-import Types (Error, CmdArgs)
+
+type Error = String
 
 isIndex :: String -> Either Error String
 isIndex index = do
   let i = fromMaybe 0 $ parseInt index $ toRadix 10 
   if (i > 0 && i < 3001)
     then Right index
-    else Left "An index must be > 0 and < 3001"
+    else Left "Indices must be > 0 and < 3001"
+  
   
 -- | A RTK index should be an integer > 0 and < 3001
 -- | Indices are separated by spaces
-isIndices :: CmdArgs -> Either Error CmdArgs
-isIndices {cmd, args} =
-  case (traverse (\i -> isIndex i) args) of
-    Right xs -> Right {cmd: cmd, args: args}
-    Left e -> Left e
+isIndices :: Array String -> Either Error (Array String)
+isIndices = traverse (\i -> isIndex i) 
 
 -- UNICODE RANGE : DESCRIPTION
 -- 
@@ -37,46 +36,46 @@ isIndices {cmd, args} =
 -- 2605-2606 : Stars
 -- 2190-2195 : Arrows
 -- u203B     : Weird asterisk thing
-isJukugo :: CmdArgs -> Either Error CmdArgs
-isJukugo {cmd, args} = 
-  case (traverse (\k -> isKanji k) args) of
-    Right xs -> Right {cmd: cmd, args: args}
-    Left e -> Left e
+isJukugo :: Array String -> Either Error (Array String)
+isJukugo args = 
+  traverse (\k -> isKanji k) args
   where
     isKanji :: String -> Either Error String
     isKanji k = do
-      expression <- regex "[\\u4E00-\\u9FAF]" $ parseFlags "g" 
-      if (test expression k)
-        then Right k
-        else Left "A jukugo must be a kanji character or kanji compound\n"
+      let expression = regex "[\\u4E00-\\u9FAF]" $ parseFlags "g" 
+      case expression of
+        Right e ->
+          if (test e k)
+            then Right k
+            else Left "A jukugo must be a kanji character or kanji compound"
+        Left s -> Left s
 
 
 -- | An RTK primitive must be lower case english string
-isPrimitives :: CmdArgs -> Either Error CmdArgs
-isPrimitives {cmd, args} = 
-  case (traverse (\p -> isPrimitive p) args) of
-    Right _ -> Right {cmd: cmd, args: args}
-    Left e -> Left e
+isPrimitives :: Array String -> Either Error (Array String)
+isPrimitives args = 
+  traverse (\p -> isPrimitive p) args
   where 
     isPrimitive :: String -> Either Error String
     isPrimitive p = do
-      expression <- regex "[a-z]" $ parseFlags "g" 
-      if (test expression p)
-        then Right p
-        else Left "Primitives must be lower case english strings\n"
+      let expression = regex "[a-z]" $ parseFlags "g" 
+      case expression of
+        Right e -> if (test e p)
+                    then Right p
+                    else Left "Primitives must be lower case english strings"
+        Left s -> Left s
 
 
--- | Valididate that arguements contain a valid index and primitives 
-isIndexPrim :: CmdArgs -> Either Error CmdArgs
-isIndexPrim {cmd, args} = 
-  let 
+---- | Valididate that arguements contain a valid index and primitives 
+isIndexPrim :: Array String -> Either Error (Array String)
+isIndexPrim args = 
+  case mbIndex of
+    Right _ -> indexPrims
+    Left e -> Left e
+  where
     mbIndex = isIndex $ fromMaybe "0" $ head args
-  in 
-   case mbIndex of
-     Right index -> 
-       case (isPrimitives {cmd, args: ps}) of
-         Right tp -> Right {cmd: cmd, args: args}
-         Left e -> Left e
-        where
-          ps = fromMaybe [""] $ tail args
-     Left e -> Left e
+    tailArgs = fromMaybe [""] $ tail args
+    indexPrims =
+      case isPrimitives(tailArgs) of
+        Right _ -> Right args
+        Left e -> Left e

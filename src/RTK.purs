@@ -10,7 +10,7 @@ import Data.Int.Parse (parseInt, toRadix)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String (Pattern(..), split, trim)
 import Data.Traversable (traverse)
-import Types (Error)
+
 
 -- TODO: Can this be a newtype?
 type Separator = String
@@ -21,6 +21,7 @@ type Keywords = Array String
 type Query = Array String
 type Indices = Array String
 type Components = Array String
+type Error = String
 
 search_rtk 
   :: Array String 
@@ -51,7 +52,7 @@ indicesToFrames query indices kanji = do
   case mxs of
     Just xs -> Right $ intercalate " " $ 
       zipWith (<>) xs $ (\x -> "[" <> x <> "]") <$> query
-    Nothing -> Left $ "indicesToFrames error"
+    Nothing -> Left "indicesToFrames error"
 
 
 -- | Given an collection of RTK primitives return the RTK frames for all

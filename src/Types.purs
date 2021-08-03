@@ -1,13 +1,13 @@
-module Types ( CmdArgs, Command(..), RTKData, Error) where
+module Types ( CmdArgs, Command(..), RTKData) where
 
 data Command =
   P2F | I2F | K2K | K2I | UC
-                          
+
 type CmdArgs = 
   { cmd :: Command
   , args :: Array String
   }
-  
+
 
 type RTKData =
   { kanji :: Array String
@@ -15,6 +15,3 @@ type RTKData =
   , keywords :: Array String
   , components :: Array String
   }
-
-
-type Error = String
