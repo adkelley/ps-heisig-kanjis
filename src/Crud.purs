@@ -1,4 +1,4 @@
-module Crud (authenticate, batchGet) where
+module Crud (authenticate, gsBatchGet, gsUpdate) where
 
 import Prelude
 
@@ -8,22 +8,16 @@ import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
 import Effect.Exception (Error)
 import Google.Auth (Client, auth)
 import Google.JWT (jwt)
-import Types (RTKData)
+import Types (RTKData, UpdateData)
 
 foreign import _gsBatchGet :: Client -> EffectFnAff RTKData
-foreign import _gsUpdate :: Client -> Array String -> EffectFnAff RTKData
+foreign import _gsUpdate :: UpdateData -> EffectFnAff String
 
-gsBatchGet :: Client -> Aff RTKData
-gsBatchGet client = fromEffectFnAff $ _gsBatchGet client
+gsBatchGet :: Client -> Aff (Either Error RTKData)
+gsBatchGet client = attempt $ fromEffectFnAff $ _gsBatchGet client
 
-gsUpdate :: Client -> Array String -> Aff RTKData
-gsUpdate client components = fromEffectFnAff $ _gsUpdate client components
+gsUpdate :: UpdateData -> Aff (Either Error String)
+gsUpdate ud = attempt $ fromEffectFnAff $ _gsUpdate ud
 
 authenticate :: Aff Client
 authenticate = auth =<< jwt
-
-batchGet :: Client -> Aff (Either Error RTKData)
-batchGet client =
-  attempt $ gsBatchGet client
-
-

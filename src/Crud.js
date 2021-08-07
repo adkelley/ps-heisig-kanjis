@@ -30,35 +30,31 @@ exports._gsBatchGet = function (client) {
         } catch (err) {
             onError(err);
             return;
-        }
+        };
 
         return function (cancelError, onCancelerError, onCancelerSuccess) {
-            onCancelerSuccess();
+          onCancelerSuccess();
         };
-    }
-}
+    };
+};
 
-exports._gsUpdate = function (client, values) {
+exports._gsUpdate = function (ud) {
     return async function (onError, onSuccess) {
 
-        const gsapi = google.sheets({version: 'v4', auth: client});
-        // Column A: kanjis, Column C: Index Column E: keywords (6th edition)
+        const gsapi = google.sheets({version: 'v4', auth: ud.client});
         // Column F: components
+        const body = { values: [[ud.value]] };
         const opt = {
             spreadsheetId: '1woYl-4S7c37pyHQKFAplinGTc9TxQZN-gL8O61RfbSk',
-            range: 'Heisig!F2:F3001',
-            majorDimension: 'COLUMNS',
-            resource: values
+            range: ud.range,
+            valueInputOption: 'RAW',
+            resource: body,
         };
 
         try {
-          const data = await gsapi.spreadsheets.values.update(opt);
-
-          const result = new Object();
-          result.components = values
-
-          onSuccess(result);
-
+            response = await gsapi.spreadsheets.values.update(opt);
+            onSuccess(ud.value);
+            
         } catch (err) {
             onError(err);
             return;
@@ -67,7 +63,7 @@ exports._gsUpdate = function (client, values) {
         return function (cancelError, onCancelerError, onCancelerSuccess) {
             onCancelerSuccess();
         };
-    }
-}
+    }; 
+};
 
 

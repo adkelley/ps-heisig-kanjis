@@ -1,5 +1,7 @@
-module Types ( CmdArgs, Command(..), RTKData) where
+module Types ( CmdArgs, Command(..), RTKData, UpdateData) where
 
+import Google.Auth (Client)
+  
 data Command =
   P2F | I2F | K2K | K2I | UC
 
@@ -9,6 +11,12 @@ type CmdArgs =
   }
 
 
+type UpdateData =
+  { client :: Client
+  , range  :: String
+  , value  :: String
+  }
+  
 type RTKData =
   { kanji :: Array String
   , indices :: Array String

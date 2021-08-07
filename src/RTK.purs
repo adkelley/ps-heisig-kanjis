@@ -1,10 +1,10 @@
 module RTK ( kanjiToKeywords, primsToFrames
            , kanjiToIndices, indicesToFrames
-           , updateComponents) where
+           , insertPrimitive) where
 
 import Prelude
 
-import Data.Array (difference, elemIndex, head, index, intercalate, intersect, tail, uncons, zipWith, (!!))
+import Data.Array (difference, elemIndex, head, index, insertAt, intercalate, intersect, tail, uncons, zipWith, (!!))
 import Data.Either (Either(..), note)
 import Data.Int.Parse (parseInt, toRadix)
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -84,20 +84,23 @@ primsToFrames ps cs ks = Right $ go cs ks 1 ""
             go tcs tks (i+1) (result <> s)
         Nothing -> "" -- we never reach here
 
-updateComponents
-  :: Query
+insertPrimitive
+  :: Array String
   -> Components
-  -> Either Error String
-updateComponents q cs =
-  let
-    radix10 = toRadix 10
-    index = head q >>=
-            (\i -> parseInt i radix10) #
-            liftA1 (\x -> x - 1) #
-            fromMaybe (-1) 
-    mbComponent = cs !! index
-    primitives = fromMaybe "" $ q !! 1
-    in
-     case mbComponent of
-       Just component -> Right component
-       Nothing -> Right "error"
+  -> Array String
+insertPrimitive ys cs =
+   case (insertAt index formatted cs) of
+      Just xs -> xs
+      Nothing -> [""]
+   where
+    index :: Int
+    index = do
+      let radix10 = toRadix 10
+      head ys >>=
+          (\i -> parseInt i radix10) #
+          liftA1 (\x -> x - 1) #
+          fromMaybe (-1) 
+
+    formatted :: String
+    formatted =
+      intercalate " ... "  $ fromMaybe [""] $ tail ys
