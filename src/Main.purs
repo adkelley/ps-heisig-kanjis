@@ -12,31 +12,17 @@ import Data.String (Pattern(..), Replacement(..), replaceAll)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class.Console (log, logShow)
-import Effect.Exception (error, Error)
+import Effect.Exception (Error)
 import Google.Auth (Client)
 import RTK (indicesToFrames, kanjiToIndices, kanjiToKeywords, primsToFrames)
-import Types (CmdArgs, Command(..), RTKData)
-import ValidateArgs (isIndexPrim, isIndices, isJukugo, isPrimitives)
+import Types (CmdArgs, Command(..))
+import ValidateArgs (validateArgs)
 
---work :: CmdArgs -> RTKData -> Aff (Either String String)
---work {cmd, args} rtk = pure $
---  case cmd of
---    P2F -> primsToFrames args rtk.components rtk.kanji
---    I2F -> indicesToFrames args rtk.indices rtk.kanji
---    K2K -> kanjiToKeywords args rtk.kanji rtk.keywords
---    K2I -> kanjiToIndices args rtk.kanji rtk.indices
---    UC -> insertPrimitive args rtk.components
   
-work :: Client -> CmdArgs -> Aff (Either Error String)
-work client {cmd, args} = do 
-  batch <- gsBatchGet client
-  doWork batch
+updateClient :: Client -> Array String -> Aff (Either Error String)
+updateClient client args = 
+  gsUpdate {client, range, value}
   where
-    go :: Either String String -> Aff (Either Error String)
-    go = case _ of
-      Right x -> pure $ Right x
-      Left  x -> pure $ Left $ error x
-
     value :: String
     value =
       let
@@ -54,51 +40,44 @@ work client {cmd, args} = do
       in
         "Heisig!F" <> index <> ":F" <> index
 
-    updateClient :: Aff (Either Error String)
-    updateClient = 
-      gsUpdate {client: client, range: range, value: value}
 
-    doWork :: Either Error RTKData -> Aff (Either Error String)
-    doWork batch =
-      case batch of
-        Right rtk ->
-          case cmd of
-            P2F -> go $ primsToFrames args rtk.components rtk.kanji
-            I2F -> go $ indicesToFrames args rtk.indices rtk.kanji
-            K2K -> go $ kanjiToKeywords args rtk.kanji rtk.keywords
-            K2I -> go $ kanjiToIndices args rtk.kanji rtk.indices
-            UC ->  updateClient 
-        Left e -> pure $ Left e
-
-validateArgs :: CmdArgs -> Either String CmdArgs
-validateArgs {cmd, args} = 
+work :: Client -> CmdArgs -> Aff (Either Error String)
+work client {cmd, args} = do 
   case cmd of
-    P2F -> validate isPrimitives 
-    I2F -> validate isIndices 
-    K2K -> validate isJukugo 
-    K2I -> validate isJukugo
-    UC  -> validate isIndexPrim
-  where
-    validate
-      :: (Array String -> Either String (Array String))
-      -> Either String CmdArgs
-    validate f =
-      case f args of
-        Right _ -> Right {cmd, args}
-        Left e  -> Left e
+    P2F -> 
+      gsBatchGet client >>= \rtk -> pure $
+      either
+        (\e -> Left e)
+        (\x -> primsToFrames args x.components x.kanji)
+        rtk
+    I2F ->
+      gsBatchGet client >>= \rtk -> pure $
+      either
+        (\e -> Left e)
+        (\x -> indicesToFrames args x.indices x.kanji)
+        rtk
+    K2K ->
+      gsBatchGet client >>= \rtk -> pure $
+      either
+        (\e -> Left e)
+        (\x -> kanjiToKeywords args x.kanji x.keywords)
+        rtk
+    K2I ->
+      gsBatchGet client >>= \rtk -> pure $
+      either
+        (\e -> Left e)
+        (\x -> kanjiToIndices args x.kanji x.indices)
+        rtk
+    UC ->  updateClient client args 
 
 
 main :: Effect Unit
 main = do
-  query <- cmdLineParser
-  launchAff_ $ doWork query
-  where
-    -- | retreive spreadsheet columns and perform query
+    query <- cmdLineParser >>= \x -> pure $ validateArgs x
+    either logShow (\x -> launchAff_ $ doWork x) query
+   where
     doWork :: CmdArgs -> Aff Unit
-    doWork cmdArgs =
-      case (validateArgs cmdArgs) of
-        Right _ -> do
-                    client <- authenticate 
-                    result <- work client cmdArgs
-                    either logShow log result
-        Left e -> logShow e
+    doWork cmdArgs = do
+      client <- authenticate 
+      result <- work client cmdArgs
+      either logShow log result

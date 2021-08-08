@@ -1,15 +1,14 @@
 module RTK ( kanjiToKeywords, primsToFrames
-           , kanjiToIndices, indicesToFrames
-           , insertPrimitive) where
+           , kanjiToIndices, indicesToFrames) where
 
 import Prelude
 
-import Data.Array (difference, elemIndex, head, index, insertAt, intercalate, intersect, tail, uncons, zipWith, (!!))
+import Data.Array (difference, elemIndex, head, index, intercalate, intersect, tail, uncons, zipWith)
 import Data.Either (Either(..), note)
-import Data.Int.Parse (parseInt, toRadix)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String (Pattern(..), split, trim)
 import Data.Traversable (traverse)
+import Effect.Exception (error, Error)
 
 
 -- TODO: Can this be a newtype?
@@ -21,7 +20,6 @@ type Keywords = Array String
 type Query = Array String
 type Indices = Array String
 type Components = Array String
-type Error = String
 
 search_rtk 
   :: Array String 
@@ -36,13 +34,13 @@ kanjiToKeywords :: Query -> Kanji -> Keywords -> Either Error String
 kanjiToKeywords query kanji keywords = do
   let result = liftA1 (\xs -> intercalate ", " xs) $ 
                  search_rtk query kanji keywords
-  note "kanjiToKeywords error" result
+  note (error "kanjiToKeywords error") result
 
 kanjiToIndices :: Query -> Kanji -> Indices -> Either Error String
 kanjiToIndices query kanji indices = do
   let result = liftA1 (\xs -> intercalate ", " xs) $ 
                  search_rtk query kanji indices
-  note "kanjiToIndices error" result
+  note (error "kanjiToIndices error") result
 
 -- | Given an collection of indices return the RTK frames for each
 -- | index as a string, otherwise return the error message parameter
@@ -52,7 +50,7 @@ indicesToFrames query indices kanji = do
   case mxs of
     Just xs -> Right $ intercalate " " $ 
       zipWith (<>) xs $ (\x -> "[" <> x <> "]") <$> query
-    Nothing -> Left "indicesToFrames error"
+    Nothing -> Left $ error "indicesToFrames error"
 
 
 -- | Given an collection of RTK primitives return the RTK frames for all
@@ -83,24 +81,3 @@ primsToFrames ps cs ks = Right $ go cs ks 1 ""
           in
             go tcs tks (i+1) (result <> s)
         Nothing -> "" -- we never reach here
-
-insertPrimitive
-  :: Array String
-  -> Components
-  -> Array String
-insertPrimitive ys cs =
-   case (insertAt index formatted cs) of
-      Just xs -> xs
-      Nothing -> [""]
-   where
-    index :: Int
-    index = do
-      let radix10 = toRadix 10
-      head ys >>=
-          (\i -> parseInt i radix10) #
-          liftA1 (\x -> x - 1) #
-          fromMaybe (-1) 
-
-    formatted :: String
-    formatted =
-      intercalate " ... "  $ fromMaybe [""] $ tail ys

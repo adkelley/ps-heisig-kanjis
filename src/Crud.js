@@ -38,6 +38,8 @@ exports._gsBatchGet = function (client) {
     };
 };
 
+// This function can take only one argument. Thus 'ud' is a record containing
+// client, range, and values
 exports._gsUpdate = function (ud) {
     return async function (onError, onSuccess) {
 

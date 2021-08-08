@@ -1,22 +1,22 @@
-module ValidateArgs (isPrimitives, isJukugo, isIndices, isIndexPrim) where
+module ValidateArgs (validateArgs) where
 
 import Prelude
 
 import Data.Array (head, tail)
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.Int.Parse (parseInt, toRadix)
 import Data.Maybe (fromMaybe)
 import Data.String.Regex (regex, test, parseFlags)
 import Data.Traversable (traverse)
-
-type Error = String
+import Effect.Exception (Error, error)
+import Types (Command(..), CmdArgs)
 
 isIndex :: String -> Either Error String
 isIndex index = do
   let i = fromMaybe 0 $ parseInt index $ toRadix 10 
   if (i > 0 && i < 3001)
     then Right index
-    else Left "Indices must be > 0 and < 3001"
+    else Left $ error "Indices must be > 0 and < 3001"
   
   
 -- | A RTK index should be an integer > 0 and < 3001
@@ -47,8 +47,8 @@ isJukugo args =
         Right e ->
           if (test e k)
             then Right k
-            else Left "A jukugo must be a kanji character or kanji compound"
-        Left s -> Left s
+            else Left $ error "A jukugo must be a kanji character or kanji compound"
+        Left s -> Left $ error s
 
 
 -- | An RTK primitive must be lower case english string
@@ -62,20 +62,34 @@ isPrimitives args =
       case expression of
         Right e -> if (test e p)
                     then Right p
-                    else Left "Primitives must be lower case english strings"
-        Left s -> Left s
+                    else Left $ error "Primitives must be lower case english strings"
+        Left s -> Left $ error s
 
 
 ---- | Valididate that arguements contain a valid index and primitives 
 isIndexPrim :: Array String -> Either Error (Array String)
 isIndexPrim args = 
-  case mbIndex of
-    Right _ -> indexPrims
-    Left e -> Left e
+  either (\e -> Left e) (\_ -> indexPrims) mbIndex 
   where
     mbIndex = isIndex $ fromMaybe "0" $ head args
     tailArgs = fromMaybe [""] $ tail args
     indexPrims =
-      case isPrimitives(tailArgs) of
-        Right _ -> Right args
-        Left e -> Left e
+      either (\e -> Left e) (\_ -> Right args) $ isPrimitives tailArgs
+
+
+validateArgs :: CmdArgs -> Either Error CmdArgs
+validateArgs {cmd, args} = 
+  case cmd of
+    P2F -> validate isPrimitives 
+    I2F -> validate isIndices 
+    K2K -> validate isJukugo 
+    K2I -> validate isJukugo
+    UC  -> validate isIndexPrim
+  where
+    validate
+      :: (Array String -> Either Error (Array String))
+      -> Either Error CmdArgs
+    validate fn =
+      either 
+      (\e -> Left e)
+      (\_ -> Right {cmd, args}) $ fn args
