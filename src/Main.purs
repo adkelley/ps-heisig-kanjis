@@ -8,7 +8,7 @@ import Data.Array (head, intercalate, tail)
 import Data.Either (Either(..), either)
 import Data.Int.Parse (parseInt, toRadix)
 import Data.Maybe (fromMaybe)
-import Data.String (Pattern(..), Replacement(..), replaceAll)
+--import Data.String (Pattern(..), Replacement(..), replaceAll)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class.Console (log, logShow)
@@ -25,11 +25,7 @@ updateClient client args =
   where
     value :: String
     value =
-      let
-        t = fromMaybe [""] $ tail args
-        r = replaceAll (Pattern "_") (Replacement " ")
-      in
-        intercalate " ... "  $ map r t
+      intercalate " ... "  $ fromMaybe [""] $ tail args
 
     range :: String
     range = 

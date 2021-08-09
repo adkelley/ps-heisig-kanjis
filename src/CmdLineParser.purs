@@ -4,8 +4,9 @@ import Prelude
 
 import Control.Alternative ((<|>))
 import Data.Foldable (fold)
+import Data.String (replaceAll)
 import Data.String.Common (split)
-import Data.String.Pattern (Pattern(..))
+import Data.String.Pattern (Pattern(..), Replacement(..))
 import Effect (Effect)
 import Options.Applicative (Parser, execParser, fullDesc, header, help, helper, info, long, metavar, progDesc, short, strOption, (<**>))
 import Types (CmdArgs, Command(..))
@@ -73,11 +74,16 @@ update = ado
 control :: Query -> Effect CmdArgs
 control query =  pure $
    case query of
-     Keywords k -> {cmd: K2K, args: split (Pattern "") k}
-     Indices i -> {cmd: K2I, args: split (Pattern "") i}
-     Primitives p -> {cmd: P2F, args: split (Pattern ";") p}
-     Frames f -> {cmd: I2F, args: split (Pattern ";") f}
-     Update w -> {cmd: UC, args: split (Pattern ";") w}
+     Keywords k -> {cmd: K2K, args: format "" k}
+     Indices i -> {cmd: K2I, args: format "" i}
+     Primitives p -> {cmd: P2F, args: format ";" p}
+     Frames f -> {cmd: I2F, args: format ";" f}
+     Update w -> {cmd: UC, args: format ";" w}
+   where
+     format :: String -> String -> Array String
+     format pattern str = 
+       split (Pattern pattern) str #
+       map (replaceAll (Pattern "_") (Replacement " "))
 
 cmdLineParser :: Effect CmdArgs
 cmdLineParser = control =<< execParser opts

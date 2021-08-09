@@ -54,9 +54,8 @@ indicesToFrames query indices kanji = do
 
 
 -- | Given an collection of RTK primitives return the RTK frames for all
--- | kanji containings these primitives, otherwise return the error 
--- | message parameter
--- | Primaitives are separated by ';'
+-- | kanji containings these primitives
+-- TODO: include kanji that are themselves primitives in the results
 primsToFrames 
   :: Query
   -> Components
@@ -64,7 +63,7 @@ primsToFrames
   -> Either Error String
 primsToFrames ps cs ks = Right $ go cs ks 1 ""
   where
-    components s = trim <$> split (Pattern ";") s
+    components s = trim <$> split (Pattern "...") s
     hasPrims xs = [] == (difference ps $ intersect ps xs)
     frame c k i = 
       if (hasPrims $ components c) 
