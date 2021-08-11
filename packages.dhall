@@ -104,8 +104,15 @@ in  upstream
       }
 -------------------------------
 -}
-
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.13.8-20200922/packages.dhall sha256:5edc9af74593eab8834d7e324e5868a3d258bbab75c5531d2eb770d4324a2900
+      https://github.com/purescript/package-sets/releases/download/psc-0.14.3-20210716/packages.dhall sha256:1f9af624ddfd5352455b7ac6df714f950d499e7e3c6504f62ff467eebd11042c
 
 in  upstream
+  with parseint =
+    { dependencies =
+      [ "functions", "integers" ]
+    , repo =
+        "https://github.com/adkelley/purescript-parseint.git"
+    , version =
+        "2297940829c8f5d2f567fd339aabdb278ff34fc9"
+    }

@@ -4,20 +4,21 @@ You can edit this file as you like.
 -}
 { name = "my-project"
 , dependencies =
-  [ "arrays"
+  [ "aff"
+  , "arrays"
   , "console"
+  , "control"
   , "effect"
+  , "either"
   , "exceptions"
   , "foldable-traversable"
   , "foreign"
-  , "lists"
-  , "node-process"
+  , "maybe"
   , "optparse"
   , "parseint"
+  , "prelude"
   , "psci-support"
   , "strings"
-  , "test-unit"
-  , "unsafe-coerce"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]
